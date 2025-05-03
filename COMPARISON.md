@@ -36,7 +36,20 @@ This document compares the implementation of the same dashboard application usin
 
 ## Key Differences
 
-### 1. Component Structure
+### 1. Interactive Features
+
+Both implementations include the following interactive features:
+
+- Collapsible sidebar with resizable width
+- Dark/light theme toggle
+- User selection with dropdown and expandable options
+- Time period selection with date range pickers
+- Rating categories selection
+- Expandable Rating Summary boxes with detailed statistics
+
+The expandable Rating Summary boxes feature allows users to click on any rating category box to see detailed statistics and a trend chart for that specific category. This implementation demonstrates how both React and Vue handle conditional rendering and component state management.
+
+### 2. Component Structure
 
 #### React
 - Uses JSX/TSX syntax
@@ -47,12 +60,12 @@ This document compares the implementation of the same dashboard application usin
 ```tsx
 export default function Dashboard() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
-  
+
   // Event handler
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
   };
-  
+
   return (
     <div className={isDarkMode ? 'dark-theme' : ''}>
       <button onClick={toggleTheme}>Toggle Theme</button>
@@ -139,7 +152,7 @@ watch(selectedUsers, (newValue) => {
 - Inline styles with the `style` prop as objects
 
 ```tsx
-<div 
+<div
   className={`sidebar ${isDarkMode ? 'dark' : 'light'}`}
   style={{ width: `${sidebarWidth}px` }}
 >
@@ -153,7 +166,7 @@ watch(selectedUsers, (newValue) => {
 - Inline styles with the `:style` directive
 
 ```vue
-<div 
+<div
   :class="['sidebar', isDarkMode ? 'dark' : 'light']"
   :style="{ width: `${sidebarWidth}px` }"
 >
@@ -256,6 +269,103 @@ watch(selectedUsers, (newValue) => {
 - Single-file components keep related code together
 - Less need for explicit optimization in many cases
 
+## Feature Implementation Comparison
+
+### Expandable Rating Summary Boxes
+
+This feature demonstrates the different approaches to component state management and conditional rendering in React and Vue.
+
+#### React Implementation
+
+```tsx
+// State management
+const [expandedRatingCategories, setExpandedRatingCategories] = useState<string[]>([]);
+
+// Toggle function
+const toggleRatingCategoryExpansion = (categoryId: string) => {
+  setExpandedRatingCategories(prev => {
+    if (prev.includes(categoryId)) {
+      return prev.filter(id => id !== categoryId);
+    } else {
+      return [...prev, categoryId];
+    }
+  });
+};
+
+// Clickable box with conditional styling
+<div
+  className={`${isDarkMode ? 'bg-red-900/30' : 'bg-red-100'} p-3 rounded cursor-pointer
+    ${expandedRatingCategories.includes('heavily_negative') ? 'ring-2 ring-red-500' : ''}`}
+  onClick={() => toggleRatingCategoryExpansion('heavily_negative')}
+>
+  {/* Box content */}
+</div>
+
+// Conditional rendering of expanded content
+{expandedRatingCategories.includes('heavily_negative') && (
+  <RatingDetail
+    categoryId="heavily_negative"
+    categoryName="Heavily Negative (-10 to -7)"
+    chartData={chartData}
+    isDarkMode={isDarkMode}
+  />
+)}
+```
+
+#### Vue Implementation
+
+```vue
+// State management
+const expandedRatingCategories = ref<string[]>([]);
+
+// Toggle function
+function toggleRatingCategoryExpansion(categoryId: string): void {
+  if (expandedRatingCategories.value.includes(categoryId)) {
+    expandedRatingCategories.value = expandedRatingCategories.value.filter(id => id !== categoryId);
+  } else {
+    expandedRatingCategories.value.push(categoryId);
+  }
+}
+
+// Template with clickable box and conditional styling
+<div
+  :class="[
+    isDarkMode ? 'bg-red-900/30' : 'bg-red-100',
+    'p-3 rounded cursor-pointer',
+    expandedRatingCategories.includes('heavily_negative') ? 'ring-2 ring-red-500' : ''
+  ]"
+  @click="toggleRatingCategoryExpansion('heavily_negative')"
+>
+  <!-- Box content -->
+</div>
+
+// Conditional rendering with v-if
+<div
+  v-if="expandedRatingCategories.includes(category)"
+  :class="[`mt-4 p-4 rounded-md`, isDarkMode ? 'bg-gray-700' : 'bg-gray-50']"
+>
+  <!-- Expanded content -->
+</div>
+```
+
+### Key Differences in Implementation
+
+1. **State Management**:
+   - React uses the `useState` hook with array destructuring
+   - Vue uses the `ref` function with direct property access
+
+2. **Event Handling**:
+   - React uses `onClick={handler}` syntax
+   - Vue uses `@click="handler"` directive
+
+3. **Conditional Rendering**:
+   - React uses `{condition && <Component />}` pattern
+   - Vue uses `v-if="condition"` directive
+
+4. **Conditional Styling**:
+   - React uses template literals and ternary operators
+   - Vue uses array binding with the `:class` directive
+
 ## Conclusion
 
 Both React and Vue.js provide powerful tools for building interactive user interfaces. The choice between them often comes down to team preference, existing codebase, and specific project requirements.
@@ -263,4 +373,4 @@ Both React and Vue.js provide powerful tools for building interactive user inter
 - **React** offers more explicit control and a larger ecosystem, which can be beneficial for large, complex applications.
 - **Vue.js** provides a more approachable syntax and built-in features that can accelerate development for many common use cases.
 
-In our dashboard implementation, both frameworks were able to achieve the same functionality with similar code organization, but with different syntax and approaches to reactivity and component structure.
+In our dashboard implementation, both frameworks were able to achieve the same functionality with similar code organization, but with different syntax and approaches to reactivity and component structure. The expandable Rating Summary boxes feature demonstrates how both frameworks can implement the same interactive functionality with their own unique patterns and syntax.

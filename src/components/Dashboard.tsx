@@ -43,6 +43,13 @@ interface CalendarProps {
   onClose: () => void;
 }
 
+interface RatingDetailProps {
+  categoryId: string;
+  categoryName: string;
+  chartData: ChartDataEntry[];
+  isDarkMode: boolean;
+}
+
 export default function Dashboard() {
   // Sample users
   const allUsers: User[] = [
@@ -101,6 +108,8 @@ export default function Dashboard() {
     return savedTheme !== null ? savedTheme === 'true' : true;
   });
   const [chartType, setChartType] = useState<ChartType>('bar');
+  // Track which rating categories are expanded
+  const [expandedRatingCategories, setExpandedRatingCategories] = useState<string[]>([]);
 
   // Helper function to subtract days from a date
   function subtractDays(date: Date, days: number): Date {
@@ -241,6 +250,83 @@ export default function Dashboard() {
     );
   };
 
+  // Rating Detail component to show expanded data
+  const RatingDetail = ({ categoryId, categoryName, chartData, isDarkMode }: RatingDetailProps) => {
+    // Filter data for the specific category
+    const categoryData = chartData.map(entry => ({
+      date: entry.date,
+      value: entry[categoryId as keyof ChartDataEntry] as number
+    })).sort((a, b) => {
+      const dateA = parseDate(a.date);
+      const dateB = parseDate(b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    // Calculate statistics
+    const total = categoryData.reduce((sum, item) => sum + item.value, 0);
+    const average = total / categoryData.length;
+    const max = Math.max(...categoryData.map(item => item.value));
+    const min = Math.min(...categoryData.map(item => item.value));
+
+    // Find dates with highest and lowest values
+    const maxDate = categoryData.find(item => item.value === max)?.date || '';
+    const minDate = categoryData.find(item => item.value === min)?.date || '';
+
+    return (
+      <div className={`mt-4 p-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-md`}>
+        <h3 className="text-md font-semibold mb-3">{categoryName} - Detailed View</h3>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow`}>
+            <div className="text-sm font-medium text-gray-500">Total</div>
+            <div className="text-xl font-bold">{total}</div>
+          </div>
+          <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow`}>
+            <div className="text-sm font-medium text-gray-500">Average</div>
+            <div className="text-xl font-bold">{average.toFixed(2)}</div>
+          </div>
+          <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow`}>
+            <div className="text-sm font-medium text-gray-500">Highest ({maxDate})</div>
+            <div className="text-xl font-bold">{max}</div>
+          </div>
+          <div className={`p-3 rounded ${isDarkMode ? 'bg-gray-800' : 'bg-white'} shadow`}>
+            <div className="text-sm font-medium text-gray-500">Lowest ({minDate})</div>
+            <div className="text-xl font-bold">{min}</div>
+          </div>
+        </div>
+
+        <div className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={categoryData}
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#4b5563" : "#e5e7eb"} />
+              <XAxis dataKey="date" stroke={isDarkMode ? "#d1d5db" : "#374151"} />
+              <YAxis stroke={isDarkMode ? "#d1d5db" : "#374151"} />
+              <Tooltip contentStyle={isDarkMode ? { backgroundColor: '#1f2937', border: '1px solid #374151', color: '#f9fafb' } : undefined} />
+              <Line
+                type="monotone"
+                dataKey="value"
+                name={categoryName}
+                stroke={
+                  categoryId === 'heavily_negative' ? '#ef4444' :
+                  categoryId === 'mild_negative' ? '#f97316' :
+                  categoryId === 'neutral' ? '#a3a3a3' :
+                  categoryId === 'mild_positive' ? '#22c55e' :
+                  '#16a34a'
+                }
+                strokeWidth={2}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  };
+
   // Resize handlers
   const handleResizeStart = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -297,6 +383,17 @@ export default function Dashboard() {
   // Handle theme toggle
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
+  };
+
+  // Handle rating category expansion
+  const toggleRatingCategoryExpansion = (categoryId: string) => {
+    setExpandedRatingCategories(prev => {
+      if (prev.includes(categoryId)) {
+        return prev.filter(id => id !== categoryId);
+      } else {
+        return [...prev, categoryId];
+      }
+    });
   };
 
   // References for scrolling to sections
@@ -809,37 +906,122 @@ export default function Dashboard() {
         <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 shadow inset-shadow-xs mb-4`}>
           <h2 className="text-lg font-semibold mb-3 text-secondary">Rating Summary</h2>
           <div className="grid grid-cols-5 gap-4 text-center">
-            <div className={`${isDarkMode ? 'bg-red-900/30' : 'bg-red-100'} p-3 rounded`}>
+            {/* Heavily Negative Box */}
+            <div
+              className={`${isDarkMode ? 'bg-red-900/30' : 'bg-red-100'} p-3 rounded cursor-pointer transition-all hover:shadow-md ${expandedRatingCategories.includes('heavily_negative') ? 'ring-2 ring-red-500' : ''}`}
+              onClick={() => toggleRatingCategoryExpansion('heavily_negative')}
+            >
               <div className={`text-xl font-bold ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
                 {chartData.reduce((sum, item) => sum + item.heavily_negative, 0)}
               </div>
               <div className="text-sm">Heavily Negative</div>
+              <div className="mt-1 text-xs">
+                {expandedRatingCategories.includes('heavily_negative') ? 'Click to collapse' : 'Click to expand'}
+              </div>
             </div>
-            <div className={`${isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100'} p-3 rounded`}>
+
+            {/* Mild Negative Box */}
+            <div
+              className={`${isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100'} p-3 rounded cursor-pointer transition-all hover:shadow-md ${expandedRatingCategories.includes('mild_negative') ? 'ring-2 ring-orange-500' : ''}`}
+              onClick={() => toggleRatingCategoryExpansion('mild_negative')}
+            >
               <div className={`text-xl font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
                 {chartData.reduce((sum, item) => sum + item.mild_negative, 0)}
               </div>
               <div className="text-sm">Mild Negative</div>
+              <div className="mt-1 text-xs">
+                {expandedRatingCategories.includes('mild_negative') ? 'Click to collapse' : 'Click to expand'}
+              </div>
             </div>
-            <div className={`${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-100'} p-3 rounded`}>
+
+            {/* Neutral Box */}
+            <div
+              className={`${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-100'} p-3 rounded cursor-pointer transition-all hover:shadow-md ${expandedRatingCategories.includes('neutral') ? 'ring-2 ring-gray-500' : ''}`}
+              onClick={() => toggleRatingCategoryExpansion('neutral')}
+            >
               <div className={`text-xl font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 {chartData.reduce((sum, item) => sum + item.neutral, 0)}
               </div>
               <div className="text-sm">Neutral</div>
+              <div className="mt-1 text-xs">
+                {expandedRatingCategories.includes('neutral') ? 'Click to collapse' : 'Click to expand'}
+              </div>
             </div>
-            <div className={`${isDarkMode ? 'bg-green-900/30' : 'bg-green-100'} p-3 rounded`}>
+
+            {/* Mild Positive Box */}
+            <div
+              className={`${isDarkMode ? 'bg-green-900/30' : 'bg-green-100'} p-3 rounded cursor-pointer transition-all hover:shadow-md ${expandedRatingCategories.includes('mild_positive') ? 'ring-2 ring-green-500' : ''}`}
+              onClick={() => toggleRatingCategoryExpansion('mild_positive')}
+            >
               <div className={`text-xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
                 {chartData.reduce((sum, item) => sum + item.mild_positive, 0)}
               </div>
               <div className="text-sm">Mild Positive</div>
+              <div className="mt-1 text-xs">
+                {expandedRatingCategories.includes('mild_positive') ? 'Click to collapse' : 'Click to expand'}
+              </div>
             </div>
-            <div className={`${isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100'} p-3 rounded`}>
+
+            {/* Heavily Positive Box */}
+            <div
+              className={`${isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100'} p-3 rounded cursor-pointer transition-all hover:shadow-md ${expandedRatingCategories.includes('heavily_positive') ? 'ring-2 ring-emerald-500' : ''}`}
+              onClick={() => toggleRatingCategoryExpansion('heavily_positive')}
+            >
               <div className={`text-xl font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
                 {chartData.reduce((sum, item) => sum + item.heavily_positive, 0)}
               </div>
               <div className="text-sm">Heavily Positive</div>
+              <div className="mt-1 text-xs">
+                {expandedRatingCategories.includes('heavily_positive') ? 'Click to collapse' : 'Click to expand'}
+              </div>
             </div>
           </div>
+
+          {/* Expanded Details Sections */}
+          {expandedRatingCategories.includes('heavily_negative') && (
+            <RatingDetail
+              categoryId="heavily_negative"
+              categoryName="Heavily Negative (-10 to -7)"
+              chartData={chartData}
+              isDarkMode={isDarkMode}
+            />
+          )}
+
+          {expandedRatingCategories.includes('mild_negative') && (
+            <RatingDetail
+              categoryId="mild_negative"
+              categoryName="Mild Negative (-6 to -1)"
+              chartData={chartData}
+              isDarkMode={isDarkMode}
+            />
+          )}
+
+          {expandedRatingCategories.includes('neutral') && (
+            <RatingDetail
+              categoryId="neutral"
+              categoryName="Neutral (-3 to +3)"
+              chartData={chartData}
+              isDarkMode={isDarkMode}
+            />
+          )}
+
+          {expandedRatingCategories.includes('mild_positive') && (
+            <RatingDetail
+              categoryId="mild_positive"
+              categoryName="Mild Positive (1 to 6)"
+              chartData={chartData}
+              isDarkMode={isDarkMode}
+            />
+          )}
+
+          {expandedRatingCategories.includes('heavily_positive') && (
+            <RatingDetail
+              categoryId="heavily_positive"
+              categoryName="Heavily Positive (7 to 10)"
+              chartData={chartData}
+              isDarkMode={isDarkMode}
+            />
+          )}
         </div>
       </div>
     </div>

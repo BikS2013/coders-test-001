@@ -8,6 +8,7 @@ A Vue.js dashboard application with TypeScript and Tailwind CSS.
 - User selection with dropdown and expandable options
 - Time period selection with date range pickers
 - Rating categories selection
+- Expandable Rating Summary boxes with detailed statistics and charts
 - Dark theme toggle
 - Resizable sidebar
 - Fully typed with TypeScript

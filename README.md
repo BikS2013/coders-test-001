@@ -8,6 +8,7 @@ A React dashboard application with TypeScript and Tailwind CSS.
 - User selection with dropdown and expandable options
 - Time period selection with date range pickers
 - Rating categories selection
+- Expandable Rating Summary boxes with detailed statistics and charts
 - Responsive charts using Recharts
 - Fully typed with TypeScript
 - Styled with Tailwind CSS

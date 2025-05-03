@@ -83,6 +83,8 @@ const sidebarCollapsed = ref(false);
 const sidebarWidth = ref(256); // Default width (64 * 4 = 256px)
 const isResizing = ref(false);
 const isDarkMode = ref(true); // Default to dark mode
+// Track which rating categories are expanded
+const expandedRatingCategories = ref<string[]>([]);
 
 // Refs for sidebar sections
 const usersRef = ref<HTMLElement | null>(null);
@@ -174,6 +176,15 @@ function handleResizeStart(e: MouseEvent): void {
 // Handle theme toggle
 function toggleTheme(): void {
   isDarkMode.value = !isDarkMode.value;
+}
+
+// Handle rating category expansion
+function toggleRatingCategoryExpansion(categoryId: string): void {
+  if (expandedRatingCategories.value.includes(categoryId)) {
+    expandedRatingCategories.value = expandedRatingCategories.value.filter(id => id !== categoryId);
+  } else {
+    expandedRatingCategories.value.push(categoryId);
+  }
 }
 
 // Handle icon click in collapsed sidebar
@@ -695,37 +706,202 @@ watch(isDarkMode, (newValue) => {
       <div :class="[isDarkMode ? 'bg-gray-800' : 'bg-white', 'p-4 shadow mb-4']">
         <h2 class="text-lg font-semibold mb-3 text-secondary">Rating Summary</h2>
         <div class="grid grid-cols-5 gap-4 text-center">
-          <div :class="[isDarkMode ? 'bg-red-900/30' : 'bg-red-100', 'p-3 rounded']">
+          <!-- Heavily Negative Box -->
+          <div
+            :class="[
+              isDarkMode ? 'bg-red-900/30' : 'bg-red-100',
+              'p-3 rounded cursor-pointer transition-all hover:shadow-md',
+              expandedRatingCategories.includes('heavily_negative') ? 'ring-2 ring-red-500' : ''
+            ]"
+            @click="toggleRatingCategoryExpansion('heavily_negative')"
+          >
             <div :class="['text-xl font-bold', isDarkMode ? 'text-red-400' : 'text-red-600']">
               {{ chartData.reduce((sum, item) => sum + item.heavily_negative, 0) }}
             </div>
             <div class="text-sm">Heavily Negative</div>
+            <div class="mt-1 text-xs">
+              {{ expandedRatingCategories.includes('heavily_negative') ? 'Click to collapse' : 'Click to expand' }}
+            </div>
           </div>
-          <div :class="[isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100', 'p-3 rounded']">
+
+          <!-- Mild Negative Box -->
+          <div
+            :class="[
+              isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100',
+              'p-3 rounded cursor-pointer transition-all hover:shadow-md',
+              expandedRatingCategories.includes('mild_negative') ? 'ring-2 ring-orange-500' : ''
+            ]"
+            @click="toggleRatingCategoryExpansion('mild_negative')"
+          >
             <div :class="['text-xl font-bold', isDarkMode ? 'text-orange-400' : 'text-orange-600']">
               {{ chartData.reduce((sum, item) => sum + item.mild_negative, 0) }}
             </div>
             <div class="text-sm">Mild Negative</div>
+            <div class="mt-1 text-xs">
+              {{ expandedRatingCategories.includes('mild_negative') ? 'Click to collapse' : 'Click to expand' }}
+            </div>
           </div>
-          <div :class="[isDarkMode ? 'bg-gray-700/50' : 'bg-gray-100', 'p-3 rounded']">
+
+          <!-- Neutral Box -->
+          <div
+            :class="[
+              isDarkMode ? 'bg-gray-700/50' : 'bg-gray-100',
+              'p-3 rounded cursor-pointer transition-all hover:shadow-md',
+              expandedRatingCategories.includes('neutral') ? 'ring-2 ring-gray-500' : ''
+            ]"
+            @click="toggleRatingCategoryExpansion('neutral')"
+          >
             <div :class="['text-xl font-bold', isDarkMode ? 'text-gray-300' : 'text-gray-600']">
               {{ chartData.reduce((sum, item) => sum + item.neutral, 0) }}
             </div>
             <div class="text-sm">Neutral</div>
+            <div class="mt-1 text-xs">
+              {{ expandedRatingCategories.includes('neutral') ? 'Click to collapse' : 'Click to expand' }}
+            </div>
           </div>
-          <div :class="[isDarkMode ? 'bg-green-900/30' : 'bg-green-100', 'p-3 rounded']">
+
+          <!-- Mild Positive Box -->
+          <div
+            :class="[
+              isDarkMode ? 'bg-green-900/30' : 'bg-green-100',
+              'p-3 rounded cursor-pointer transition-all hover:shadow-md',
+              expandedRatingCategories.includes('mild_positive') ? 'ring-2 ring-green-500' : ''
+            ]"
+            @click="toggleRatingCategoryExpansion('mild_positive')"
+          >
             <div :class="['text-xl font-bold', isDarkMode ? 'text-green-400' : 'text-green-600']">
               {{ chartData.reduce((sum, item) => sum + item.mild_positive, 0) }}
             </div>
             <div class="text-sm">Mild Positive</div>
+            <div class="mt-1 text-xs">
+              {{ expandedRatingCategories.includes('mild_positive') ? 'Click to collapse' : 'Click to expand' }}
+            </div>
           </div>
-          <div :class="[isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100', 'p-3 rounded']">
+
+          <!-- Heavily Positive Box -->
+          <div
+            :class="[
+              isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100',
+              'p-3 rounded cursor-pointer transition-all hover:shadow-md',
+              expandedRatingCategories.includes('heavily_positive') ? 'ring-2 ring-emerald-500' : ''
+            ]"
+            @click="toggleRatingCategoryExpansion('heavily_positive')"
+          >
             <div :class="['text-xl font-bold', isDarkMode ? 'text-emerald-400' : 'text-emerald-600']">
               {{ chartData.reduce((sum, item) => sum + item.heavily_positive, 0) }}
             </div>
             <div class="text-sm">Heavily Positive</div>
+            <div class="mt-1 text-xs">
+              {{ expandedRatingCategories.includes('heavily_positive') ? 'Click to collapse' : 'Click to expand' }}
+            </div>
           </div>
         </div>
+
+        <!-- Expanded Details Sections -->
+        <template v-for="category in ['heavily_negative', 'mild_negative', 'neutral', 'mild_positive', 'heavily_positive']" :key="category">
+          <div
+            v-if="expandedRatingCategories.includes(category)"
+            :class="[`mt-4 p-4 rounded-md`, isDarkMode ? 'bg-gray-700' : 'bg-gray-50']"
+          >
+            <h3 class="text-md font-semibold mb-3">
+              {{
+                category === 'heavily_negative' ? 'Heavily Negative (-10 to -7)' :
+                category === 'mild_negative' ? 'Mild Negative (-6 to -1)' :
+                category === 'neutral' ? 'Neutral (-3 to +3)' :
+                category === 'mild_positive' ? 'Mild Positive (1 to 6)' :
+                'Heavily Positive (7 to 10)'
+              }} - Detailed View
+            </h3>
+
+            <!-- Statistics Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <!-- Total -->
+              <div :class="[`p-3 rounded shadow`, isDarkMode ? 'bg-gray-800' : 'bg-white']">
+                <div class="text-sm font-medium text-gray-500">Total</div>
+                <div class="text-xl font-bold">
+                  {{ chartData.reduce((sum, item) => sum + item[category], 0) }}
+                </div>
+              </div>
+
+              <!-- Average -->
+              <div :class="[`p-3 rounded shadow`, isDarkMode ? 'bg-gray-800' : 'bg-white']">
+                <div class="text-sm font-medium text-gray-500">Average</div>
+                <div class="text-xl font-bold">
+                  {{ (chartData.reduce((sum, item) => sum + item[category], 0) / chartData.length).toFixed(2) }}
+                </div>
+              </div>
+
+              <!-- Highest -->
+              <div :class="[`p-3 rounded shadow`, isDarkMode ? 'bg-gray-800' : 'bg-white']">
+                <div class="text-sm font-medium text-gray-500">Highest</div>
+                <div class="text-xl font-bold">
+                  {{ Math.max(...chartData.map(item => item[category])) }}
+                </div>
+              </div>
+
+              <!-- Lowest -->
+              <div :class="[`p-3 rounded shadow`, isDarkMode ? 'bg-gray-800' : 'bg-white']">
+                <div class="text-sm font-medium text-gray-500">Lowest</div>
+                <div class="text-xl font-bold">
+                  {{ Math.min(...chartData.map(item => item[category])) }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Line Chart for the Category -->
+            <div class="h-48">
+              <v-chart
+                class="w-full h-full"
+                :option="{
+                  backgroundColor: 'transparent',
+                  tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+                    borderColor: isDarkMode ? '#374151' : '#e5e7eb',
+                    textStyle: { color: isDarkMode ? '#f9fafb' : '#111827' }
+                  },
+                  grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                  },
+                  xAxis: {
+                    type: 'category',
+                    data: chartData.map(item => item.date),
+                    axisLine: { lineStyle: { color: isDarkMode ? '#4b5563' : '#e5e7eb' } },
+                    axisLabel: { color: isDarkMode ? '#d1d5db' : '#374151' }
+                  },
+                  yAxis: {
+                    type: 'value',
+                    axisLine: { lineStyle: { color: isDarkMode ? '#4b5563' : '#e5e7eb' } },
+                    axisLabel: { color: isDarkMode ? '#d1d5db' : '#374151' },
+                    splitLine: { lineStyle: { color: isDarkMode ? '#4b5563' : '#e5e7eb', type: 'dashed' } }
+                  },
+                  series: [{
+                    data: chartData.map(item => item[category]),
+                    type: 'line',
+                    smooth: true,
+                    name: category === 'heavily_negative' ? 'Heavily Negative' :
+                          category === 'mild_negative' ? 'Mild Negative' :
+                          category === 'neutral' ? 'Neutral' :
+                          category === 'mild_positive' ? 'Mild Positive' :
+                          'Heavily Positive',
+                    itemStyle: {
+                      color: category === 'heavily_negative' ? '#ef4444' :
+                             category === 'mild_negative' ? '#f97316' :
+                             category === 'neutral' ? '#a3a3a3' :
+                             category === 'mild_positive' ? '#22c55e' :
+                             '#16a34a'
+                    }
+                  }]
+                }"
+                autoresize
+              />
+            </div>
+          </div>
+        </template>
       </div>
     </div>
   </div>
