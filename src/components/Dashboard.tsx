@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, Calendar, ChevronLeft, ChevronRight, Moon, Sun, Users, Clock, Settings, BarChart2, LineChart as LineChartIcon, PieChart as PieChartIcon, AreaChart as AreaChartIcon } from 'lucide-react';
+import { ChevronDown, Calendar, ChevronLeft, ChevronRight, Moon, Sun, Users, Clock, BarChart2, LineChart as LineChartIcon, PieChart as PieChartIcon, AreaChart as AreaChartIcon } from 'lucide-react';
 import {
   BarChart, Bar,
   LineChart, Line,
