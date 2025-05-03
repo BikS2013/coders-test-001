@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, defineComponent, computed } from 'vue';
-import { ChevronDown, Calendar, ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-vue-next';
+import { ChevronDown, Calendar, ChevronLeft, ChevronRight, Moon, Sun, Users, Clock, BarChart2 } from 'lucide-vue-next';
 
 // Define interfaces
 interface User {
@@ -83,6 +83,11 @@ const sidebarCollapsed = ref(false);
 const sidebarWidth = ref(256); // Default width (64 * 4 = 256px)
 const isResizing = ref(false);
 const isDarkMode = ref(true); // Default to dark mode
+
+// Refs for sidebar sections
+const usersRef = ref<HTMLElement | null>(null);
+const timeRef = ref<HTMLElement | null>(null);
+const ratingsRef = ref<HTMLElement | null>(null);
 
 // Format date to dd/mm/yyyy
 function formatDate(date: Date): string {
@@ -171,6 +176,18 @@ function toggleTheme(): void {
   isDarkMode.value = !isDarkMode.value;
 }
 
+// Handle icon click in collapsed sidebar
+function handleIconClick(ref: any): void {
+  if (sidebarCollapsed.value) {
+    sidebarCollapsed.value = false;
+
+    // Wait for sidebar to expand before scrolling
+    setTimeout(() => {
+      ref.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300); // Match the transition duration
+  }
+}
+
 // Generate sample chart data
 function generateChartData(): ChartDataEntry[] {
   const startDate = parseDate(fromDate.value);
@@ -199,6 +216,90 @@ function generateChartData(): ChartDataEntry[] {
 }
 
 const chartData = ref(generateChartData());
+
+// ECharts configuration
+const chartOption = computed(() => {
+  // Extract dates for x-axis
+  const dates = chartData.value.map(item => item.date);
+
+  // Prepare series data
+  const series = [
+    {
+      name: 'Heavily Negative',
+      type: 'bar',
+      stack: 'total',
+      emphasis: { focus: 'series' },
+      data: chartData.value.map(item => item.heavily_negative),
+      itemStyle: { color: isDarkMode.value ? '#ef4444' : '#ef4444' }
+    },
+    {
+      name: 'Mild Negative',
+      type: 'bar',
+      stack: 'total',
+      emphasis: { focus: 'series' },
+      data: chartData.value.map(item => item.mild_negative),
+      itemStyle: { color: isDarkMode.value ? '#f97316' : '#f97316' }
+    },
+    {
+      name: 'Neutral',
+      type: 'bar',
+      stack: 'total',
+      emphasis: { focus: 'series' },
+      data: chartData.value.map(item => item.neutral),
+      itemStyle: { color: isDarkMode.value ? '#a3a3a3' : '#a3a3a3' }
+    },
+    {
+      name: 'Mild Positive',
+      type: 'bar',
+      stack: 'total',
+      emphasis: { focus: 'series' },
+      data: chartData.value.map(item => item.mild_positive),
+      itemStyle: { color: isDarkMode.value ? '#22c55e' : '#22c55e' }
+    },
+    {
+      name: 'Heavily Positive',
+      type: 'bar',
+      stack: 'total',
+      emphasis: { focus: 'series' },
+      data: chartData.value.map(item => item.heavily_positive),
+      itemStyle: { color: isDarkMode.value ? '#16a34a' : '#16a34a' }
+    }
+  ];
+
+  return {
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      backgroundColor: isDarkMode.value ? '#1f2937' : '#ffffff',
+      borderColor: isDarkMode.value ? '#374151' : '#e5e7eb',
+      textStyle: { color: isDarkMode.value ? '#f9fafb' : '#111827' }
+    },
+    legend: {
+      data: ['Heavily Negative', 'Mild Negative', 'Neutral', 'Mild Positive', 'Heavily Positive'],
+      textStyle: { color: isDarkMode.value ? '#d1d5db' : '#374151' }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLine: { lineStyle: { color: isDarkMode.value ? '#4b5563' : '#e5e7eb' } },
+      axisLabel: { color: isDarkMode.value ? '#d1d5db' : '#374151' }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: { lineStyle: { color: isDarkMode.value ? '#4b5563' : '#e5e7eb' } },
+      axisLabel: { color: isDarkMode.value ? '#d1d5db' : '#374151' },
+      splitLine: { lineStyle: { color: isDarkMode.value ? '#4b5563' : '#e5e7eb', type: 'dashed' } }
+    },
+    series: series
+  };
+});
 
 // Simple calendar functionality
 function handleCalendarDateSelect(date: string, isFromDate: boolean): void {
@@ -265,6 +366,9 @@ watch(isDarkMode, (newValue) => {
   } else {
     document.body.classList.remove('dark-theme');
   }
+
+  // Force chart to update with new theme colors
+  chartOption.value = chartOption.value;
 });
 </script>
 
@@ -302,6 +406,51 @@ watch(isDarkMode, (newValue) => {
         <div class="h-full w-px bg-gray-600 group-hover:bg-primary group-hover:w-0.5 transition-all"></div>
       </div>
 
+      <!-- Collapsed sidebar icons -->
+      <div v-if="sidebarCollapsed" class="flex flex-col items-center pt-12 space-y-6">
+        <div class="flex flex-col items-center">
+          <button
+            @click="toggleTheme"
+            class="p-2 rounded-full hover:bg-gray-700 transition-colors"
+            :aria-label="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+            :title="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+          >
+            <Sun v-if="isDarkMode" :size="20" />
+            <Moon v-else :size="20" />
+          </button>
+        </div>
+        <div class="flex flex-col items-center">
+          <button
+            @click="() => handleIconClick(usersRef)"
+            class="p-2 rounded-full hover:bg-gray-700 transition-colors"
+            aria-label="Users"
+            title="Users"
+          >
+            <Users :size="20" />
+          </button>
+        </div>
+        <div class="flex flex-col items-center">
+          <button
+            @click="() => handleIconClick(timeRef)"
+            class="p-2 rounded-full hover:bg-gray-700 transition-colors"
+            aria-label="Time Period"
+            title="Time Period"
+          >
+            <Clock :size="20" />
+          </button>
+        </div>
+        <div class="flex flex-col items-center">
+          <button
+            @click="() => handleIconClick(ratingsRef)"
+            class="p-2 rounded-full hover:bg-gray-700 transition-colors"
+            aria-label="Rating Categories"
+            title="Rating Categories"
+          >
+            <BarChart2 :size="20" />
+          </button>
+        </div>
+      </div>
+
       <div v-if="!sidebarCollapsed" class="p-4">
         <div class="flex justify-between items-center mb-6">
           <h1 class="text-xl font-bold">Dashboard Settings</h1>
@@ -316,7 +465,7 @@ watch(isDarkMode, (newValue) => {
         </div>
 
         <!-- Users Selection -->
-        <div class="mb-6">
+        <div class="mb-6" ref="usersRef">
           <h2 class="text-sm font-semibold mb-2">Users</h2>
           <div class="flex items-center mb-2">
             <div :class="['relative w-full', expandUsers ? 'opacity-50 pointer-events-none' : '']">
@@ -397,7 +546,7 @@ watch(isDarkMode, (newValue) => {
         </div>
 
         <!-- Time Period Selection -->
-        <div class="mb-6">
+        <div class="mb-6" ref="timeRef">
           <h2 class="text-sm font-semibold mb-2">Time Period</h2>
           <div class="relative w-full mb-3">
             <button
@@ -485,7 +634,7 @@ watch(isDarkMode, (newValue) => {
         </div>
 
         <!-- Ratings Selection -->
-        <div class="mb-6">
+        <div class="mb-6" ref="ratingsRef">
           <h2 class="text-sm font-semibold mb-2">Rating Categories</h2>
           <div class="border border-gray-700 rounded-md p-2 bg-gray-800">
             <label
@@ -538,10 +687,7 @@ watch(isDarkMode, (newValue) => {
       <div :class="[isDarkMode ? 'bg-gray-800' : 'bg-white', 'p-4 shadow mb-4']">
         <h2 class="text-lg font-semibold mb-3 text-primary">Ratings Distribution Over Time</h2>
         <div class="h-64">
-          <!-- Chart would go here - using a placeholder for now -->
-          <div class="w-full h-full flex items-center justify-center bg-gray-700 rounded">
-            <p>Chart Placeholder - Recharts would be integrated here</p>
-          </div>
+          <v-chart class="w-full h-full" :option="chartOption" autoresize />
         </div>
       </div>
 
@@ -587,4 +733,8 @@ watch(isDarkMode, (newValue) => {
 
 <style scoped>
 /* Component-specific styles can go here */
+.echarts {
+  width: 100%;
+  height: 100%;
+}
 </style>
