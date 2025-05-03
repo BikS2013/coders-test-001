@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronDown, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, Calendar, ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Define types
@@ -86,6 +86,11 @@ export default function Dashboard() {
     return savedWidth ? parseInt(savedWidth, 10) : 256;
   });
   const [isResizing, setIsResizing] = useState<boolean>(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    // Try to get saved theme preference from localStorage, default to true (dark mode)
+    const savedTheme = localStorage.getItem('darkMode');
+    return savedTheme !== null ? savedTheme === 'true' : true;
+  });
 
   // Helper function to subtract days from a date
   function subtractDays(date: Date, days: number): Date {
@@ -268,6 +273,22 @@ export default function Dashboard() {
     }
   }, [sidebarWidth, sidebarCollapsed]);
 
+  // Save theme preference to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('darkMode', isDarkMode.toString());
+    // Apply theme class to the document body
+    if (isDarkMode) {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
+  }, [isDarkMode]);
+
+  // Handle theme toggle
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
   // Generate sample chart data
   const generateChartData = (): ChartDataEntry[] => {
     const startDate = parseDate(fromDate);
@@ -298,7 +319,7 @@ export default function Dashboard() {
   const chartData = generateChartData();
 
   return (
-    <div className={`flex h-screen bg-gray-100 ${isResizing ? 'cursor-ew-resize select-none' : ''}`}>
+    <div className={`flex h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} ${isResizing ? 'cursor-ew-resize select-none' : ''}`}>
       {/* Sidebar */}
       <div
         className={`${sidebarCollapsed ? 'w-12' : ''} ${isResizing ? '' : 'transition-all duration-300'} bg-gray-900 text-white shadow-md inset-shadow-sm overflow-y-auto relative`}
@@ -324,7 +345,16 @@ export default function Dashboard() {
         )}
 
         {!sidebarCollapsed && <div className="p-4">
-        <h1 className="text-xl font-bold mb-6">Dashboard Settings</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-xl font-bold">Dashboard Settings</h1>
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full hover:bg-gray-700 transition-colors"
+            aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+        </div>
 
         {/* Users Selection */}
         <div className="mb-6">
@@ -514,22 +544,22 @@ export default function Dashboard() {
       </div>
 
       {/* Main Dashboard Area */}
-      <div className="flex-1 overflow-y-auto">
+      <div className={`flex-1 overflow-y-auto ${isDarkMode ? 'text-gray-200' : ''}`}>
         {/* Top panel - Selection Criteria Summary */}
-        <div className="bg-white p-4 shadow inset-shadow-xs mb-4">
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 shadow inset-shadow-xs mb-4`}>
           <h1 className="text-xl font-bold mb-3">Chatbot Ratings Dashboard</h1>
           <div className="grid grid-cols-3 gap-4">
-            <div className="border rounded p-2">
+            <div className={`border ${isDarkMode ? 'border-gray-700' : ''} rounded p-2`}>
               <h3 className="text-sm font-semibold mb-1">Users</h3>
               <p className="text-sm">
                 {selectedUsers.includes('all') ? 'All Users' : `${selectedUsers.length} selected`}
               </p>
             </div>
-            <div className="border rounded p-2">
+            <div className={`border ${isDarkMode ? 'border-gray-700' : ''} rounded p-2`}>
               <h3 className="text-sm font-semibold mb-1">Time Period</h3>
               <p className="text-sm">{fromDate} - {toDate}</p>
             </div>
-            <div className="border rounded p-2">
+            <div className={`border ${isDarkMode ? 'border-gray-700' : ''} rounded p-2`}>
               <h3 className="text-sm font-semibold mb-1">Rating Categories</h3>
               <p className="text-sm">
                 {selectedRatingCategories.includes('all') ? 'All Ratings' :
@@ -542,7 +572,7 @@ export default function Dashboard() {
         </div>
 
         {/* Bar Chart Panel */}
-        <div className="bg-white p-4 shadow inset-shadow-xs mb-4">
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 shadow inset-shadow-xs mb-4`}>
           <h2 className="text-lg font-semibold mb-3 text-primary">Ratings Distribution Over Time</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -550,11 +580,11 @@ export default function Dashboard() {
                 data={chartData}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#4b5563" : "#e5e7eb"} />
+                <XAxis dataKey="date" stroke={isDarkMode ? "#d1d5db" : "#374151"} />
+                <YAxis stroke={isDarkMode ? "#d1d5db" : "#374151"} />
+                <Tooltip contentStyle={isDarkMode ? { backgroundColor: '#1f2937', border: '1px solid #374151', color: '#f9fafb' } : undefined} />
+                <Legend wrapperStyle={isDarkMode ? { color: '#f9fafb' } : undefined} />
                 <Bar dataKey="heavily_negative" stackId="stack" name="Heavily Negative (-10 to -7)" fill="#ef4444" />
                 <Bar dataKey="mild_negative" stackId="stack" name="Mild Negative (-6 to -1)" fill="#f97316" />
                 <Bar dataKey="neutral" stackId="stack" name="Neutral (-3 to +3)" fill="#a3a3a3" />
@@ -566,35 +596,35 @@ export default function Dashboard() {
         </div>
 
         {/* Additional dashboard panels could go here */}
-        <div className="bg-white p-4 shadow inset-shadow-xs mb-4">
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 shadow inset-shadow-xs mb-4`}>
           <h2 className="text-lg font-semibold mb-3 text-secondary">Rating Summary</h2>
           <div className="grid grid-cols-5 gap-4 text-center">
-            <div className="bg-red-100 p-3 rounded">
-              <div className="text-xl font-bold text-red-600">
+            <div className={`${isDarkMode ? 'bg-red-900/30' : 'bg-red-100'} p-3 rounded`}>
+              <div className={`text-xl font-bold ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
                 {chartData.reduce((sum, item) => sum + item.heavily_negative, 0)}
               </div>
               <div className="text-sm">Heavily Negative</div>
             </div>
-            <div className="bg-orange-100 p-3 rounded">
-              <div className="text-xl font-bold text-orange-600">
+            <div className={`${isDarkMode ? 'bg-orange-900/30' : 'bg-orange-100'} p-3 rounded`}>
+              <div className={`text-xl font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
                 {chartData.reduce((sum, item) => sum + item.mild_negative, 0)}
               </div>
               <div className="text-sm">Mild Negative</div>
             </div>
-            <div className="bg-gray-100 p-3 rounded">
-              <div className="text-xl font-bold text-gray-600">
+            <div className={`${isDarkMode ? 'bg-gray-700/50' : 'bg-gray-100'} p-3 rounded`}>
+              <div className={`text-xl font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                 {chartData.reduce((sum, item) => sum + item.neutral, 0)}
               </div>
               <div className="text-sm">Neutral</div>
             </div>
-            <div className="bg-green-100 p-3 rounded">
-              <div className="text-xl font-bold text-green-600">
+            <div className={`${isDarkMode ? 'bg-green-900/30' : 'bg-green-100'} p-3 rounded`}>
+              <div className={`text-xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
                 {chartData.reduce((sum, item) => sum + item.mild_positive, 0)}
               </div>
               <div className="text-sm">Mild Positive</div>
             </div>
-            <div className="bg-emerald-100 p-3 rounded">
-              <div className="text-xl font-bold text-emerald-600">
+            <div className={`${isDarkMode ? 'bg-emerald-900/30' : 'bg-emerald-100'} p-3 rounded`}>
+              <div className={`text-xl font-bold ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
                 {chartData.reduce((sum, item) => sum + item.heavily_positive, 0)}
               </div>
               <div className="text-sm">Heavily Positive</div>
