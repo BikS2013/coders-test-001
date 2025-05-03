@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, Calendar, ChevronLeft, ChevronRight, Moon, Sun, Users, Clock, Settings, BarChart2 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { ChevronDown, Calendar, ChevronLeft, ChevronRight, Moon, Sun, Users, Clock, Settings, BarChart2, LineChart as LineChartIcon, PieChart as PieChartIcon, AreaChart as AreaChartIcon } from 'lucide-react';
+import {
+  BarChart, Bar,
+  LineChart, Line,
+  AreaChart, Area,
+  PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
 // Define types
 interface User {
@@ -68,6 +74,9 @@ export default function Dashboard() {
     { id: 'mild_negative', name: 'Mild Negative (-6 to -1)', min: -6, max: -1 },
   ];
 
+  // Define chart types
+  type ChartType = 'bar' | 'line' | 'area' | 'pie';
+
   // State variables
   const [expandUsers, setExpandUsers] = useState<boolean>(false);
   const [selectedUsers, setSelectedUsers] = useState<(number | string)[]>([...allUsers.map(u => u.id), 'all']);
@@ -91,6 +100,7 @@ export default function Dashboard() {
     const savedTheme = localStorage.getItem('darkMode');
     return savedTheme !== null ? savedTheme === 'true' : true;
   });
+  const [chartType, setChartType] = useState<ChartType>('bar');
 
   // Helper function to subtract days from a date
   function subtractDays(date: Date, days: number): Date {
@@ -634,27 +644,164 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Bar Chart Panel */}
+        {/* Chart Panel with Type Selector */}
         <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 shadow inset-shadow-xs mb-4`}>
-          <h2 className="text-lg font-semibold mb-3 text-primary">Ratings Distribution Over Time</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-lg font-semibold text-primary">Ratings Distribution Over Time</h2>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setChartType('bar')}
+                className={`p-2 rounded-md ${chartType === 'bar'
+                  ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-200')
+                  : (isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100')}`}
+                title="Bar Chart"
               >
-                <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#4b5563" : "#e5e7eb"} />
-                <XAxis dataKey="date" stroke={isDarkMode ? "#d1d5db" : "#374151"} />
-                <YAxis stroke={isDarkMode ? "#d1d5db" : "#374151"} />
-                <Tooltip contentStyle={isDarkMode ? { backgroundColor: '#1f2937', border: '1px solid #374151', color: '#f9fafb' } : undefined} />
-                <Legend wrapperStyle={isDarkMode ? { color: '#f9fafb' } : undefined} />
-                <Bar dataKey="heavily_negative" stackId="stack" name="Heavily Negative (-10 to -7)" fill="#ef4444" />
-                <Bar dataKey="mild_negative" stackId="stack" name="Mild Negative (-6 to -1)" fill="#f97316" />
-                <Bar dataKey="neutral" stackId="stack" name="Neutral (-3 to +3)" fill="#a3a3a3" />
-                <Bar dataKey="mild_positive" stackId="stack" name="Mild Positive (1 to 6)" fill="#22c55e" />
-                <Bar dataKey="heavily_positive" stackId="stack" name="Heavily Positive (7 to 10)" fill="#16a34a" />
-              </BarChart>
-            </ResponsiveContainer>
+                <BarChart2 size={18} />
+              </button>
+              <button
+                onClick={() => setChartType('line')}
+                className={`p-2 rounded-md ${chartType === 'line'
+                  ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-200')
+                  : (isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100')}`}
+                title="Line Chart"
+              >
+                <LineChartIcon size={18} />
+              </button>
+              <button
+                onClick={() => setChartType('area')}
+                className={`p-2 rounded-md ${chartType === 'area'
+                  ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-200')
+                  : (isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100')}`}
+                title="Area Chart"
+              >
+                <AreaChartIcon size={18} />
+              </button>
+              <button
+                onClick={() => setChartType('pie')}
+                className={`p-2 rounded-md ${chartType === 'pie'
+                  ? (isDarkMode ? 'bg-gray-700' : 'bg-gray-200')
+                  : (isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100')}`}
+                title="Pie Chart"
+              >
+                <PieChartIcon size={18} />
+              </button>
+            </div>
+          </div>
+          <div className="h-64">
+            {chartType === 'bar' && (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#4b5563" : "#e5e7eb"} />
+                  <XAxis dataKey="date" stroke={isDarkMode ? "#d1d5db" : "#374151"} />
+                  <YAxis stroke={isDarkMode ? "#d1d5db" : "#374151"} />
+                  <Tooltip contentStyle={isDarkMode ? { backgroundColor: '#1f2937', border: '1px solid #374151', color: '#f9fafb' } : undefined} />
+                  <Legend wrapperStyle={isDarkMode ? { color: '#f9fafb' } : undefined} />
+                  <Bar dataKey="heavily_negative" stackId="stack" name="Heavily Negative (-10 to -7)" fill="#ef4444" />
+                  <Bar dataKey="mild_negative" stackId="stack" name="Mild Negative (-6 to -1)" fill="#f97316" />
+                  <Bar dataKey="neutral" stackId="stack" name="Neutral (-3 to +3)" fill="#a3a3a3" />
+                  <Bar dataKey="mild_positive" stackId="stack" name="Mild Positive (1 to 6)" fill="#22c55e" />
+                  <Bar dataKey="heavily_positive" stackId="stack" name="Heavily Positive (7 to 10)" fill="#16a34a" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+
+            {chartType === 'line' && (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#4b5563" : "#e5e7eb"} />
+                  <XAxis dataKey="date" stroke={isDarkMode ? "#d1d5db" : "#374151"} />
+                  <YAxis stroke={isDarkMode ? "#d1d5db" : "#374151"} />
+                  <Tooltip contentStyle={isDarkMode ? { backgroundColor: '#1f2937', border: '1px solid #374151', color: '#f9fafb' } : undefined} />
+                  <Legend wrapperStyle={isDarkMode ? { color: '#f9fafb' } : undefined} />
+                  <Line type="monotone" dataKey="heavily_negative" name="Heavily Negative (-10 to -7)" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="mild_negative" name="Mild Negative (-6 to -1)" stroke="#f97316" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="neutral" name="Neutral (-3 to +3)" stroke="#a3a3a3" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="mild_positive" name="Mild Positive (1 to 6)" stroke="#22c55e" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="heavily_positive" name="Heavily Positive (7 to 10)" stroke="#16a34a" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+
+            {chartType === 'area' && (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? "#4b5563" : "#e5e7eb"} />
+                  <XAxis dataKey="date" stroke={isDarkMode ? "#d1d5db" : "#374151"} />
+                  <YAxis stroke={isDarkMode ? "#d1d5db" : "#374151"} />
+                  <Tooltip contentStyle={isDarkMode ? { backgroundColor: '#1f2937', border: '1px solid #374151', color: '#f9fafb' } : undefined} />
+                  <Legend wrapperStyle={isDarkMode ? { color: '#f9fafb' } : undefined} />
+                  <Area type="monotone" dataKey="heavily_negative" name="Heavily Negative (-10 to -7)" stackId="1" fill="#ef4444" stroke="#ef4444" fillOpacity={0.8} />
+                  <Area type="monotone" dataKey="mild_negative" name="Mild Negative (-6 to -1)" stackId="1" fill="#f97316" stroke="#f97316" fillOpacity={0.8} />
+                  <Area type="monotone" dataKey="neutral" name="Neutral (-3 to +3)" stackId="1" fill="#a3a3a3" stroke="#a3a3a3" fillOpacity={0.8} />
+                  <Area type="monotone" dataKey="mild_positive" name="Mild Positive (1 to 6)" stackId="1" fill="#22c55e" stroke="#22c55e" fillOpacity={0.8} />
+                  <Area type="monotone" dataKey="heavily_positive" name="Heavily Positive (7 to 10)" stackId="1" fill="#16a34a" stroke="#16a34a" fillOpacity={0.8} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+
+            {chartType === 'pie' && (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <Tooltip contentStyle={isDarkMode ? { backgroundColor: '#1f2937', border: '1px solid #374151', color: '#f9fafb' } : undefined} />
+                  <Legend wrapperStyle={isDarkMode ? { color: '#f9fafb' } : undefined} />
+                  <Pie
+                    data={[
+                      {
+                        name: "Heavily Negative (-10 to -7)",
+                        value: chartData.reduce((sum, item) => sum + item.heavily_negative, 0),
+                        color: "#ef4444"
+                      },
+                      {
+                        name: "Mild Negative (-6 to -1)",
+                        value: chartData.reduce((sum, item) => sum + item.mild_negative, 0),
+                        color: "#f97316"
+                      },
+                      {
+                        name: "Neutral (-3 to +3)",
+                        value: chartData.reduce((sum, item) => sum + item.neutral, 0),
+                        color: "#a3a3a3"
+                      },
+                      {
+                        name: "Mild Positive (1 to 6)",
+                        value: chartData.reduce((sum, item) => sum + item.mild_positive, 0),
+                        color: "#22c55e"
+                      },
+                      {
+                        name: "Heavily Positive (7 to 10)",
+                        value: chartData.reduce((sum, item) => sum + item.heavily_positive, 0),
+                        color: "#16a34a"
+                      }
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    nameKey="name"
+                  >
+                    {[
+                      { name: "Heavily Negative (-10 to -7)", color: "#ef4444" },
+                      { name: "Mild Negative (-6 to -1)", color: "#f97316" },
+                      { name: "Neutral (-3 to +3)", color: "#a3a3a3" },
+                      { name: "Mild Positive (1 to 6)", color: "#22c55e" },
+                      { name: "Heavily Positive (7 to 10)", color: "#16a34a" }
+                    ].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
