@@ -1,0 +1,90 @@
+@using BlazorDashboard.Models
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+
+@namespace BlazorDashboard.Components.Charts
+
+<div class="h-full w-full">
+    <canvas id="@ChartId"></canvas>
+</div>
+
+@code {
+    [Parameter]
+    public string ChartId { get; set; } = "lineChart";
+
+    [Parameter]
+    public List<ChartDataEntry> Data { get; set; } = new List<ChartDataEntry>();
+
+    [Parameter]
+    public string CategoryId { get; set; } = string.Empty;
+
+    [Parameter]
+    public string CategoryName { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool IsDarkMode { get; set; }
+
+    private bool _initialized = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender || _initialized)
+        {
+            _initialized = true;
+            await CreateChart();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_initialized && Data.Any())
+        {
+            await DestroyChart();
+            StateHasChanged(); // Force re-render to ensure canvas is recreated
+        }
+    }
+
+    private async Task CreateChart()
+    {
+        if (Data == null || !Data.Any() || string.IsNullOrEmpty(CategoryId))
+            return;
+
+        // Extract dates for labels
+        var labels = Data.Select(item => item.Date).ToArray();
+
+        // Get data for the selected category
+        var categoryData = CategoryId switch
+        {
+            "heavily_negative" => Data.Select(item => item.HeavilyNegative).ToArray(),
+            "mild_negative" => Data.Select(item => item.MildNegative).ToArray(),
+            "neutral" => Data.Select(item => item.Neutral).ToArray(),
+            "mild_positive" => Data.Select(item => item.MildPositive).ToArray(),
+            "heavily_positive" => Data.Select(item => item.HeavilyPositive).ToArray(),
+            _ => Array.Empty<int>()
+        };
+
+        // Get color for the selected category
+        var categoryColor = CategoryId switch
+        {
+            "heavily_negative" => "#ef4444",
+            "mild_negative" => "#f97316",
+            "neutral" => "#a3a3a3",
+            "mild_positive" => "#22c55e",
+            "heavily_positive" => "#16a34a",
+            _ => "#3b82f6"
+        };
+
+        // Call JavaScript function to create the chart
+        await JSRuntime.InvokeVoidAsync("chartInterop.createLineChart", ChartId, labels, categoryData, CategoryName, categoryColor, IsDarkMode);
+    }
+
+    private async Task DestroyChart()
+    {
+        await JSRuntime.InvokeVoidAsync("chartInterop.destroyChart", ChartId);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await DestroyChart();
+    }
+}

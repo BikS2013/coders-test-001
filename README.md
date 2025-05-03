@@ -1,6 +1,11 @@
 # Dashboard App
 
-A React dashboard application with TypeScript and Tailwind CSS.
+A multi-framework dashboard application for visualizing chatbot ratings data.
+
+## Implementations
+
+- **React**: TypeScript and Tailwind CSS implementation
+- **Blazor WebAssembly**: .NET 9.0 implementation with Chart.js
 
 ## Features
 
@@ -67,9 +72,45 @@ yarn preview
 
 ## Technologies Used
 
+### React Implementation
 - React 18
 - TypeScript
 - Vite
 - Tailwind CSS (via CDN)
 - Recharts for data visualization
 - Lucide React for icons
+
+### Blazor WebAssembly Implementation
+- .NET 9.0
+- Blazor WebAssembly
+- Tailwind CSS (via CDN)
+- Chart.js for data visualization
+- Font Awesome for icons
+- JavaScript Interop for Chart.js integration
+
+## Running the Blazor Implementation
+
+### Prerequisites
+- .NET 9.0 SDK or later
+- A modern web browser
+
+### Running the Application
+1. Navigate to the BlazorDashboard directory
+2. Run the application:
+
+```bash
+cd BlazorDashboard
+dotnet run
+```
+
+This will start the app at http://localhost:5143 (or another available port)
+
+### Building for Production
+To build the app for production:
+
+```bash
+cd BlazorDashboard
+dotnet publish -c Release
+```
+
+The build output will be in the `bin/Release/net9.0/publish` directory.

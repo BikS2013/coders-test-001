@@ -1,0 +1,102 @@
+@using BlazorDashboard.Models
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+
+@namespace BlazorDashboard.Components.Charts
+
+<div class="h-full w-full">
+    <canvas id="@ChartId"></canvas>
+</div>
+
+@code {
+    [Parameter]
+    public string ChartId { get; set; } = "barChart";
+
+    [Parameter]
+    public List<ChartDataEntry> Data { get; set; } = new List<ChartDataEntry>();
+
+    [Parameter]
+    public bool IsDarkMode { get; set; }
+
+    private bool _initialized = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender || _initialized)
+        {
+            _initialized = true;
+            await CreateChart();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_initialized && Data.Any())
+        {
+            await DestroyChart();
+            StateHasChanged(); // Force re-render to ensure canvas is recreated
+        }
+    }
+
+    private async Task CreateChart()
+    {
+        if (Data == null || !Data.Any())
+            return;
+
+        // Extract dates for labels
+        var labels = Data.Select(item => item.Date).ToArray();
+
+        // Create datasets
+        var datasets = new[]
+        {
+            new
+            {
+                label = "Heavily Negative (-10 to -7)",
+                data = Data.Select(item => item.HeavilyNegative).ToArray(),
+                backgroundColor = "#ef4444",
+                borderColor = "#ef4444"
+            },
+            new
+            {
+                label = "Mild Negative (-6 to -1)",
+                data = Data.Select(item => item.MildNegative).ToArray(),
+                backgroundColor = "#f97316",
+                borderColor = "#f97316"
+            },
+            new
+            {
+                label = "Neutral (-3 to +3)",
+                data = Data.Select(item => item.Neutral).ToArray(),
+                backgroundColor = "#a3a3a3",
+                borderColor = "#a3a3a3"
+            },
+            new
+            {
+                label = "Mild Positive (1 to 6)",
+                data = Data.Select(item => item.MildPositive).ToArray(),
+                backgroundColor = "#22c55e",
+                borderColor = "#22c55e"
+            },
+            new
+            {
+                label = "Heavily Positive (7 to 10)",
+                data = Data.Select(item => item.HeavilyPositive).ToArray(),
+                backgroundColor = "#16a34a",
+                borderColor = "#16a34a"
+            }
+        };
+
+        // Call JavaScript function to create the chart
+        await JSRuntime.InvokeVoidAsync("chartInterop.createBarChart", ChartId, labels, datasets, IsDarkMode);
+    }
+
+    private async Task DestroyChart()
+    {
+        await JSRuntime.InvokeVoidAsync("chartInterop.destroyChart", ChartId);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await DestroyChart();
+    }
+}

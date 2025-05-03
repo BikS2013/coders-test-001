@@ -1,0 +1,605 @@
+@page "/"
+@using BlazorDashboard.Models
+@using BlazorDashboard.Services
+@using BlazorDashboard.Components.Charts
+@inject DataService DataService
+@inject ThemeService ThemeService
+
+<div class="@(ThemeService.IsDarkMode ? "dark" : "")">
+    <div class="@(ThemeService.IsDarkMode ? "bg-gray-900 text-gray-200" : "bg-gray-100 text-gray-800") flex h-screen @(IsResizing ? "cursor-ew-resize select-none" : "")">
+        <!-- Sidebar -->
+        <div class="@(SidebarCollapsed ? "w-12" : "") @(IsResizing ? "" : "transition-all duration-300") bg-gray-900 text-white shadow-md overflow-y-auto relative"
+             style="width: @(SidebarCollapsed ? "3rem" : $"{SidebarWidth}px")">
+            <div class="absolute right-0 top-2 p-1">
+                <button @onclick="ToggleSidebar"
+                        class="bg-gray-700 text-white rounded-l-md p-1 hover:bg-primary/40 not-hover:opacity-75">
+                    @if (!SidebarCollapsed)
+                    {
+                        <i class="fas fa-chevron-left text-sm"></i>
+                    }
+                    else
+                    {
+                        <i class="fas fa-chevron-right text-sm"></i>
+                    }
+                </button>
+            </div>
+
+            <!-- Sidebar resizer -->
+            <div class="absolute right-0 top-0 bottom-0 w-1 cursor-ew-resize"
+                 @onmousedown="StartResizing">
+            </div>
+
+            <!-- Sidebar content -->
+            @if (!SidebarCollapsed)
+            {
+                <div class="p-4 pt-12">
+                    <h2 class="text-xl font-bold mb-6">Dashboard</h2>
+
+                    <!-- Theme toggle -->
+                    <div class="mb-6">
+                        <button @onclick="ToggleTheme"
+                                class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-800 w-full">
+                            @if (ThemeService.IsDarkMode)
+                            {
+                                <i class="fas fa-sun"></i>
+                                <span>Light Mode</span>
+                            }
+                            else
+                            {
+                                <i class="fas fa-moon"></i>
+                                <span>Dark Mode</span>
+                            }
+                        </button>
+                    </div>
+
+                    <!-- Users section -->
+                    <div class="mb-6">
+                        <h3 class="text-sm font-semibold uppercase text-gray-400 mb-2">Users</h3>
+                        <div class="relative">
+                            <button @onclick="() => IsDropdownOpen = !IsDropdownOpen"
+                                    class="flex items-center justify-between w-full p-2 bg-gray-800 rounded-md">
+                                <span>
+                                    @(SelectedUsers.Contains("all") ? "All Users" : $"{SelectedUsers.Count} selected")
+                                </span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+
+                            @if (IsDropdownOpen)
+                            {
+                                <div class="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-700 rounded-md shadow-lg">
+                                    <div class="p-2">
+                                        <div class="flex items-center mb-2">
+                                            <input type="checkbox" id="all-users" checked="@SelectedUsers.Contains("all")" @onchange="() => ToggleAllUsers()" />
+                                            <label for="all-users" class="ml-2">All Users</label>
+                                        </div>
+                                        <button @onclick="() => ExpandUsers = !ExpandUsers" class="text-sm text-blue-400 hover:underline mb-2">
+                                            @(ExpandUsers ? "Collapse" : "Expand")
+                                        </button>
+                                        @if (ExpandUsers)
+                                        {
+                                            @foreach (var user in AllUsers)
+                                            {
+                                                <div class="flex items-center mb-1">
+                                                    <input type="checkbox" id="@($"user-{user.Id}")" checked="@SelectedUsers.Contains(user.Id.ToString())" @onchange="() => ToggleUser(user.Id.ToString())" />
+                                                    <label for="@($"user-{user.Id}")" class="ml-2">@user.Name</label>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Time Period section -->
+                    <div class="mb-6">
+                        <h3 class="text-sm font-semibold uppercase text-gray-400 mb-2">Time Period</h3>
+                        <div class="relative">
+                            <button @onclick="() => IsTimeDropdownOpen = !IsTimeDropdownOpen"
+                                    class="flex items-center justify-between w-full p-2 bg-gray-800 rounded-md">
+                                <span>
+                                    @(TimePeriods.FirstOrDefault(t => t.Id == SelectedTimePeriod)?.Name ?? "Custom")
+                                </span>
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </button>
+
+                            @if (IsTimeDropdownOpen)
+                            {
+                                <div class="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-700 rounded-md shadow-lg">
+                                    <div class="p-2">
+                                        @foreach (var period in TimePeriods)
+                                        {
+                                            <div class="flex items-center mb-1">
+                                                <input type="radio" id="@($"period-{period.Id}")" name="time-period" checked="@(SelectedTimePeriod == period.Id)" @onchange="() => SelectTimePeriod(period.Id)" />
+                                                <label for="@($"period-{period.Id}")" class="ml-2">@period.Name</label>
+                                            </div>
+                                        }
+                                        <div class="mt-2">
+                                            <div class="mb-2">
+                                                <label class="text-xs text-gray-400">From:</label>
+                                                <div class="flex items-center">
+                                                    <input type="text" @bind="FromDate" class="w-full px-3 py-2 text-sm border border-gray-700 rounded-md bg-gray-800 text-white" placeholder="MM/dd/yyyy" />
+                                                    <button @onclick="() => ShowFromCalendar = !ShowFromCalendar" class="absolute right-2">
+                                                        <i class="fas fa-calendar text-sm"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="mb-2">
+                                                <label class="text-xs text-gray-400">To:</label>
+                                                <div class="flex items-center">
+                                                    <input type="text" @bind="ToDate" class="w-full px-3 py-2 text-sm border border-gray-700 rounded-md bg-gray-800 text-white" placeholder="MM/dd/yyyy" />
+                                                    <button @onclick="() => ShowToCalendar = !ShowToCalendar" class="absolute right-2">
+                                                        <i class="fas fa-calendar text-sm"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Rating Categories section -->
+                    <div class="mb-6">
+                        <h3 class="text-sm font-semibold uppercase text-gray-400 mb-2">Rating Categories</h3>
+                        <div class="bg-gray-800 p-2 rounded-md">
+                            <div class="flex items-center mb-2">
+                                <input type="checkbox" id="all-ratings" checked="@SelectedRatingCategories.Contains("all")" @onchange="() => ToggleAllRatingCategories()" />
+                                <label for="all-ratings" class="ml-2">All Ratings</label>
+                            </div>
+                            @foreach (var category in RatingCategories)
+                            {
+                                <div class="flex items-center mb-1">
+                                    <input type="checkbox" id="@($"category-{category.Id}")" checked="@SelectedRatingCategories.Contains(category.Id)" @onchange="() => ToggleRatingCategory(category.Id)" />
+                                    <label for="@($"category-{category.Id}")" class="ml-2">@category.Name</label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Collapsed sidebar icons -->
+                <div class="flex flex-col items-center pt-12 space-y-6">
+                    <div class="flex flex-col items-center">
+                        <button @onclick="ToggleTheme"
+                                class="p-2 rounded-full hover:bg-gray-700 transition-colors"
+                                aria-label="@(ThemeService.IsDarkMode ? "Switch to light mode" : "Switch to dark mode")"
+                                title="@(ThemeService.IsDarkMode ? "Switch to light mode" : "Switch to dark mode")">
+                            @if (ThemeService.IsDarkMode)
+                            {
+                                <i class="fas fa-sun"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-moon"></i>
+                            }
+                        </button>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <button @onclick="() => { SidebarCollapsed = false; IsDropdownOpen = true; }"
+                                class="p-2 rounded-full hover:bg-gray-700 transition-colors"
+                                aria-label="Users"
+                                title="Users">
+                            <i class="fas fa-users"></i>
+                        </button>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <button @onclick="() => { SidebarCollapsed = false; IsTimeDropdownOpen = true; }"
+                                class="p-2 rounded-full hover:bg-gray-700 transition-colors"
+                                aria-label="Time Period"
+                                title="Time Period">
+                            <i class="fas fa-clock"></i>
+                        </button>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <button @onclick="() => { SidebarCollapsed = false; }"
+                                class="p-2 rounded-full hover:bg-gray-700 transition-colors"
+                                aria-label="Rating Categories"
+                                title="Rating Categories">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Main Dashboard Area -->
+        <div class="flex-1 overflow-y-auto">
+            <!-- Top panel - Selection Criteria Summary -->
+            <div class="@(ThemeService.IsDarkMode ? "bg-gray-800" : "bg-white") p-4 shadow mb-4">
+                <h1 class="text-xl font-bold mb-3">Chatbot Ratings Dashboard</h1>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="@(ThemeService.IsDarkMode ? "border-gray-700" : "") border rounded p-2">
+                        <h3 class="text-sm font-semibold mb-1">Users</h3>
+                        <p class="text-sm">
+                            @(SelectedUsers.Contains("all") ? "All Users" : $"{SelectedUsers.Count} selected")
+                        </p>
+                    </div>
+                    <div class="@(ThemeService.IsDarkMode ? "border-gray-700" : "") border rounded p-2">
+                        <h3 class="text-sm font-semibold mb-1">Time Period</h3>
+                        <p class="text-sm">@FromDate - @ToDate</p>
+                    </div>
+                    <div class="@(ThemeService.IsDarkMode ? "border-gray-700" : "") border rounded p-2">
+                        <h3 class="text-sm font-semibold mb-1">Rating Categories</h3>
+                        <p class="text-sm">
+                            @(SelectedRatingCategories.Contains("all") ? "All Ratings" :
+                                string.Join(", ", RatingCategories.Where(c => SelectedRatingCategories.Contains(c.Id)).Select(c => c.Name)))
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bar Chart Panel -->
+            <div class="@(ThemeService.IsDarkMode ? "bg-gray-800" : "bg-white") p-4 shadow mb-4">
+                <h2 class="text-lg font-semibold mb-3 text-primary">Ratings Distribution Over Time</h2>
+                <div class="h-64">
+                    <BlazorDashboard.Components.Charts.BarChart ChartId="mainBarChart" Data="@ChartData" IsDarkMode="@ThemeService.IsDarkMode" />
+                </div>
+            </div>
+
+            <!-- Rating Summary -->
+            <div class="@(ThemeService.IsDarkMode ? "bg-gray-800" : "bg-white") p-4 shadow mb-4">
+                <h2 class="text-lg font-semibold mb-3 @(ThemeService.IsDarkMode ? "text-secondary" : "text-secondary")">Rating Summary</h2>
+                <div class="grid grid-cols-5 gap-4 text-center">
+                    <!-- Heavily Negative Box -->
+                    <div class="@(ThemeService.IsDarkMode ? "bg-red-900/30" : "bg-red-100") p-3 rounded cursor-pointer transition-all hover:shadow-md @(ExpandedRatingCategories.Contains("heavily_negative") ? "ring-2 ring-red-500" : "")"
+                         @onclick="@(() => ToggleRatingCategoryExpansion("heavily_negative"))">
+                        <div class="@(ThemeService.IsDarkMode ? "text-red-400" : "text-red-600") text-xl font-bold">
+                            @ChartData.Sum(item => item.HeavilyNegative)
+                        </div>
+                        <div class="text-sm">Heavily Negative</div>
+                    </div>
+
+                    <!-- Mild Negative Box -->
+                    <div class="@(ThemeService.IsDarkMode ? "bg-orange-900/30" : "bg-orange-100") p-3 rounded cursor-pointer transition-all hover:shadow-md @(ExpandedRatingCategories.Contains("mild_negative") ? "ring-2 ring-orange-500" : "")"
+                         @onclick="@(() => ToggleRatingCategoryExpansion("mild_negative"))">
+                        <div class="@(ThemeService.IsDarkMode ? "text-orange-400" : "text-orange-600") text-xl font-bold">
+                            @ChartData.Sum(item => item.MildNegative)
+                        </div>
+                        <div class="text-sm">Mild Negative</div>
+                    </div>
+
+                    <!-- Neutral Box -->
+                    <div class="@(ThemeService.IsDarkMode ? "bg-gray-700/30" : "bg-gray-100") p-3 rounded cursor-pointer transition-all hover:shadow-md @(ExpandedRatingCategories.Contains("neutral") ? "ring-2 ring-gray-500" : "")"
+                         @onclick="@(() => ToggleRatingCategoryExpansion("neutral"))">
+                        <div class="@(ThemeService.IsDarkMode ? "text-gray-300" : "text-gray-600") text-xl font-bold">
+                            @ChartData.Sum(item => item.Neutral)
+                        </div>
+                        <div class="text-sm">Neutral</div>
+                    </div>
+
+                    <!-- Mild Positive Box -->
+                    <div class="@(ThemeService.IsDarkMode ? "bg-green-900/30" : "bg-green-100") p-3 rounded cursor-pointer transition-all hover:shadow-md @(ExpandedRatingCategories.Contains("mild_positive") ? "ring-2 ring-green-500" : "")"
+                         @onclick="@(() => ToggleRatingCategoryExpansion("mild_positive"))">
+                        <div class="@(ThemeService.IsDarkMode ? "text-green-400" : "text-green-600") text-xl font-bold">
+                            @ChartData.Sum(item => item.MildPositive)
+                        </div>
+                        <div class="text-sm">Mild Positive</div>
+                    </div>
+
+                    <!-- Heavily Positive Box -->
+                    <div class="@(ThemeService.IsDarkMode ? "bg-emerald-900/30" : "bg-emerald-100") p-3 rounded cursor-pointer transition-all hover:shadow-md @(ExpandedRatingCategories.Contains("heavily_positive") ? "ring-2 ring-emerald-500" : "")"
+                         @onclick="@(() => ToggleRatingCategoryExpansion("heavily_positive"))">
+                        <div class="@(ThemeService.IsDarkMode ? "text-emerald-400" : "text-emerald-600") text-xl font-bold">
+                            @ChartData.Sum(item => item.HeavilyPositive)
+                        </div>
+                        <div class="text-sm">Heavily Positive</div>
+                    </div>
+                </div>
+
+                <!-- Expanded Rating Category Details -->
+                @foreach (var categoryId in ExpandedRatingCategories)
+                {
+                    <div class="mt-4 p-4 @(ThemeService.IsDarkMode ? "bg-gray-700" : "bg-gray-50") rounded-md">
+                        <h3 class="text-lg font-semibold mb-3">
+                            @RatingCategories.FirstOrDefault(c => c.Id == categoryId)?.Name Details
+                        </h3>
+
+                        <!-- Statistics Cards -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                            <!-- Total -->
+                            <div class="@(ThemeService.IsDarkMode ? "bg-gray-800" : "bg-white") p-3 rounded shadow">
+                                <div class="text-sm font-medium text-gray-500">Total</div>
+                                <div class="text-xl font-bold">
+                                    @GetCategoryTotal(categoryId)
+                                </div>
+                            </div>
+
+                            <!-- Average -->
+                            <div class="@(ThemeService.IsDarkMode ? "bg-gray-800" : "bg-white") p-3 rounded shadow">
+                                <div class="text-sm font-medium text-gray-500">Average</div>
+                                <div class="text-xl font-bold">
+                                    @GetCategoryAverage(categoryId).ToString("F2")
+                                </div>
+                            </div>
+
+                            <!-- Highest -->
+                            <div class="@(ThemeService.IsDarkMode ? "bg-gray-800" : "bg-white") p-3 rounded shadow">
+                                <div class="text-sm font-medium text-gray-500">Highest (@GetCategoryMaxDate(categoryId))</div>
+                                <div class="text-xl font-bold">
+                                    @GetCategoryMax(categoryId)
+                                </div>
+                            </div>
+
+                            <!-- Lowest -->
+                            <div class="@(ThemeService.IsDarkMode ? "bg-gray-800" : "bg-white") p-3 rounded shadow">
+                                <div class="text-sm font-medium text-gray-500">Lowest (@GetCategoryMinDate(categoryId))</div>
+                                <div class="text-xl font-bold">
+                                    @GetCategoryMin(categoryId)
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Line Chart -->
+                        <div class="h-48">
+                            <BlazorDashboard.Components.Charts.LineChart
+                                ChartId="@($"lineChart_{categoryId}")"
+                                Data="@ChartData"
+                                CategoryId="@categoryId"
+                                CategoryName="@RatingCategories.FirstOrDefault(c => c.Id == categoryId)?.Name"
+                                IsDarkMode="@ThemeService.IsDarkMode" />
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // State variables
+    private bool SidebarCollapsed { get; set; } = false;
+    private int SidebarWidth { get; set; } = 256; // Default width
+    private bool IsResizing { get; set; } = false;
+    private bool ExpandUsers { get; set; } = false;
+    private List<string> SelectedUsers { get; set; } = new List<string>();
+    private string SelectedTimePeriod { get; set; } = string.Empty;
+    private string FromDate { get; set; } = string.Empty;
+    private string ToDate { get; set; } = string.Empty;
+    private List<string> SelectedRatingCategories { get; set; } = new List<string>();
+    private bool IsDropdownOpen { get; set; } = false;
+    private bool IsTimeDropdownOpen { get; set; } = false;
+    private bool ShowFromCalendar { get; set; } = false;
+    private bool ShowToCalendar { get; set; } = false;
+    private HashSet<string> ExpandedRatingCategories { get; set; } = new HashSet<string>();
+
+    // No chart references needed
+
+    // Data
+    private List<User> AllUsers { get; set; } = new List<User>();
+    private List<TimePeriod> TimePeriods { get; set; } = new List<TimePeriod>();
+    private List<RatingCategory> RatingCategories { get; set; } = new List<RatingCategory>();
+    private List<ChartDataEntry> ChartData { get; set; } = new List<ChartDataEntry>();
+
+    protected override void OnInitialized()
+    {
+        // Initialize data
+        AllUsers = DataService.GetAllUsers();
+        TimePeriods = DataService.GetTimePeriods();
+        RatingCategories = DataService.GetRatingCategories();
+
+        // Initialize state
+        SelectedUsers = AllUsers.Select(u => u.Id.ToString()).ToList();
+        SelectedUsers.Add("all");
+        SelectedTimePeriod = TimePeriods[1].Id; // Default to "Last Week"
+        FromDate = DataService.FormatDate(TimePeriods[1].FromDate);
+        ToDate = DataService.FormatDate(TimePeriods[1].ToDate);
+        SelectedRatingCategories = new List<string> { "all" };
+
+        // Generate chart data
+        ChartData = DataService.GenerateChartData(TimePeriods[1].FromDate, TimePeriods[1].ToDate);
+
+        // Subscribe to theme changes
+        ThemeService.OnThemeChanged += OnThemeChanged;
+    }
+
+    private void OnThemeChanged()
+    {
+        // Force re-render which will update the charts with new theme
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        // Unsubscribe from theme changes
+        ThemeService.OnThemeChanged -= OnThemeChanged;
+    }
+
+    private void ToggleSidebar()
+    {
+        SidebarCollapsed = !SidebarCollapsed;
+    }
+
+    private void ToggleTheme()
+    {
+        ThemeService.ToggleTheme();
+    }
+
+    private void StartResizing()
+    {
+        IsResizing = true;
+        // In a real implementation, we would add event listeners for mousemove and mouseup
+    }
+
+    private void ToggleAllUsers()
+    {
+        if (SelectedUsers.Contains("all"))
+        {
+            SelectedUsers.Clear();
+        }
+        else
+        {
+            SelectedUsers = AllUsers.Select(u => u.Id.ToString()).ToList();
+            SelectedUsers.Add("all");
+        }
+    }
+
+    private void ToggleUser(string userId)
+    {
+        if (SelectedUsers.Contains(userId))
+        {
+            SelectedUsers.Remove(userId);
+            SelectedUsers.Remove("all");
+        }
+        else
+        {
+            SelectedUsers.Add(userId);
+            if (SelectedUsers.Count == AllUsers.Count)
+            {
+                SelectedUsers.Add("all");
+            }
+        }
+    }
+
+    private void SelectTimePeriod(string periodId)
+    {
+        SelectedTimePeriod = periodId;
+        var period = TimePeriods.FirstOrDefault(p => p.Id == periodId);
+        if (period != null)
+        {
+            FromDate = DataService.FormatDate(period.FromDate);
+            ToDate = DataService.FormatDate(period.ToDate);
+            ChartData = DataService.GenerateChartData(period.FromDate, period.ToDate);
+
+            // StateHasChanged will trigger chart updates
+            StateHasChanged();
+        }
+    }
+
+    private void ToggleAllRatingCategories()
+    {
+        if (SelectedRatingCategories.Contains("all"))
+        {
+            SelectedRatingCategories.Clear();
+        }
+        else
+        {
+            SelectedRatingCategories = RatingCategories.Select(c => c.Id).ToList();
+            SelectedRatingCategories.Add("all");
+        }
+    }
+
+    private void ToggleRatingCategory(string categoryId)
+    {
+        if (SelectedRatingCategories.Contains(categoryId))
+        {
+            SelectedRatingCategories.Remove(categoryId);
+            SelectedRatingCategories.Remove("all");
+        }
+        else
+        {
+            SelectedRatingCategories.Add(categoryId);
+            if (SelectedRatingCategories.Count == RatingCategories.Count)
+            {
+                SelectedRatingCategories.Add("all");
+            }
+        }
+    }
+
+    private void ToggleRatingCategoryExpansion(string categoryId)
+    {
+        if (ExpandedRatingCategories.Contains(categoryId))
+        {
+            ExpandedRatingCategories.Remove(categoryId);
+        }
+        else
+        {
+            ExpandedRatingCategories.Add(categoryId);
+        }
+    }
+
+    private int GetCategoryTotal(string categoryId)
+    {
+        return categoryId switch
+        {
+            "heavily_negative" => ChartData.Sum(item => item.HeavilyNegative),
+            "mild_negative" => ChartData.Sum(item => item.MildNegative),
+            "neutral" => ChartData.Sum(item => item.Neutral),
+            "mild_positive" => ChartData.Sum(item => item.MildPositive),
+            "heavily_positive" => ChartData.Sum(item => item.HeavilyPositive),
+            _ => 0
+        };
+    }
+
+    private double GetCategoryAverage(string categoryId)
+    {
+        if (ChartData.Count == 0) return 0;
+
+        return categoryId switch
+        {
+            "heavily_negative" => ChartData.Average(item => item.HeavilyNegative),
+            "mild_negative" => ChartData.Average(item => item.MildNegative),
+            "neutral" => ChartData.Average(item => item.Neutral),
+            "mild_positive" => ChartData.Average(item => item.MildPositive),
+            "heavily_positive" => ChartData.Average(item => item.HeavilyPositive),
+            _ => 0
+        };
+    }
+
+    private int GetCategoryMax(string categoryId)
+    {
+        if (ChartData.Count == 0) return 0;
+
+        return categoryId switch
+        {
+            "heavily_negative" => ChartData.Max(item => item.HeavilyNegative),
+            "mild_negative" => ChartData.Max(item => item.MildNegative),
+            "neutral" => ChartData.Max(item => item.Neutral),
+            "mild_positive" => ChartData.Max(item => item.MildPositive),
+            "heavily_positive" => ChartData.Max(item => item.HeavilyPositive),
+            _ => 0
+        };
+    }
+
+    private int GetCategoryMin(string categoryId)
+    {
+        if (ChartData.Count == 0) return 0;
+
+        return categoryId switch
+        {
+            "heavily_negative" => ChartData.Min(item => item.HeavilyNegative),
+            "mild_negative" => ChartData.Min(item => item.MildNegative),
+            "neutral" => ChartData.Min(item => item.Neutral),
+            "mild_positive" => ChartData.Min(item => item.MildPositive),
+            "heavily_positive" => ChartData.Min(item => item.HeavilyPositive),
+            _ => 0
+        };
+    }
+
+    private string GetCategoryMaxDate(string categoryId)
+    {
+        if (ChartData.Count == 0) return string.Empty;
+
+        ChartDataEntry maxEntry = categoryId switch
+        {
+            "heavily_negative" => ChartData.OrderByDescending(item => item.HeavilyNegative).First(),
+            "mild_negative" => ChartData.OrderByDescending(item => item.MildNegative).First(),
+            "neutral" => ChartData.OrderByDescending(item => item.Neutral).First(),
+            "mild_positive" => ChartData.OrderByDescending(item => item.MildPositive).First(),
+            "heavily_positive" => ChartData.OrderByDescending(item => item.HeavilyPositive).First(),
+            _ => ChartData.First()
+        };
+
+        return maxEntry.Date;
+    }
+
+    private string GetCategoryMinDate(string categoryId)
+    {
+        if (ChartData.Count == 0) return string.Empty;
+
+        ChartDataEntry minEntry = categoryId switch
+        {
+            "heavily_negative" => ChartData.OrderBy(item => item.HeavilyNegative).First(),
+            "mild_negative" => ChartData.OrderBy(item => item.MildNegative).First(),
+            "neutral" => ChartData.OrderBy(item => item.Neutral).First(),
+            "mild_positive" => ChartData.OrderBy(item => item.MildPositive).First(),
+            "heavily_positive" => ChartData.OrderBy(item => item.HeavilyPositive).First(),
+            _ => ChartData.First()
+        };
+
+        return minEntry.Date;
+    }
+}
