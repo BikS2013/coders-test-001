@@ -194,7 +194,7 @@ export default function Dashboard() {
     };
 
     return (
-      <div className="absolute z-10 bg-white shadow-lg rounded-md p-2 border border-gray-200 w-64">
+      <div className="absolute z-10 bg-gray-800 text-white shadow-lg rounded-md p-2 border border-gray-700 w-64">
         <div className="flex justify-between mb-2">
           <button onClick={() => changeMonth(-1)} className="px-2">←</button>
           <div>
@@ -210,7 +210,7 @@ export default function Dashboard() {
             <div
               key={index}
               onClick={() => handleDateClick(day)}
-              className={`text-center text-sm p-1 cursor-pointer hover:bg-primary/10 ${day ? '' : 'invisible'}`}
+              className={`text-center text-sm p-1 cursor-pointer hover:bg-gray-700 ${day ? '' : 'invisible'}`}
             >
               {day}
             </div>
@@ -252,11 +252,11 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-12' : 'w-64'} bg-white shadow-md inset-shadow-sm overflow-y-auto transition-all duration-300 relative`}>
+      <div className={`${sidebarCollapsed ? 'w-12' : 'w-64'} bg-gray-900 text-white shadow-md inset-shadow-sm overflow-y-auto transition-all duration-300 relative`}>
         <div className="absolute right-0 top-2 p-1">
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="bg-gray-200 rounded-l-md p-1 hover:bg-primary/20 not-hover:opacity-75"
+            className="bg-gray-700 text-white rounded-l-md p-1 hover:bg-primary/40 not-hover:opacity-75"
           >
             {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
@@ -272,7 +272,7 @@ export default function Dashboard() {
             <div className={`relative w-full ${expandUsers ? 'opacity-50 pointer-events-none' : ''}`}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex justify-between items-center w-full px-3 py-2 text-sm border rounded-md bg-white"
+                className="flex justify-between items-center w-full px-3 py-2 text-sm border border-gray-700 rounded-md bg-gray-800 text-white"
                 disabled={expandUsers}
               >
                 <span>{selectedUsers.includes('all') ? 'All Users' : `${selectedUsers.length} selected`}</span>
@@ -280,9 +280,9 @@ export default function Dashboard() {
               </button>
 
               {isDropdownOpen && !expandUsers && (
-                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg">
+                <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg">
                   <div className="p-2">
-                    <label className="flex items-center p-2 hover:bg-primary/5">
+                    <label className="flex items-center p-2 hover:bg-gray-700">
                       <input
                         type="checkbox"
                         checked={selectedUsers.includes('all')}
@@ -293,7 +293,7 @@ export default function Dashboard() {
                     </label>
 
                     {allUsers.map(user => (
-                      <label key={user.id} className="flex items-center p-2 hover:bg-primary/5">
+                      <label key={user.id} className="flex items-center p-2 hover:bg-gray-700">
                         <input
                           type="checkbox"
                           checked={selectedUsers.includes(user.id)}
@@ -323,8 +323,8 @@ export default function Dashboard() {
           </div>
 
           {expandUsers && (
-            <div className="border rounded-md p-2 mt-2 bg-white">
-              <label className="flex items-center p-1 hover:bg-primary/5">
+            <div className="border border-gray-700 rounded-md p-2 mt-2 bg-gray-800">
+              <label className="flex items-center p-1 hover:bg-gray-700">
                 <input
                   type="checkbox"
                   checked={selectedUsers.includes('all')}
@@ -335,7 +335,7 @@ export default function Dashboard() {
               </label>
 
               {allUsers.map(user => (
-                <label key={user.id} className="flex items-center p-1 hover:bg-primary/5">
+                <label key={user.id} className="flex items-center p-1 hover:bg-gray-700">
                   <input
                     type="checkbox"
                     checked={selectedUsers.includes(user.id)}
@@ -355,19 +355,19 @@ export default function Dashboard() {
           <div className="relative w-full mb-3">
             <button
               onClick={() => setIsTimeDropdownOpen(!isTimeDropdownOpen)}
-              className="flex justify-between items-center w-full px-3 py-2 text-sm border rounded-md bg-white"
+              className="flex justify-between items-center w-full px-3 py-2 text-sm border border-gray-700 rounded-md bg-gray-800 text-white"
             >
               <span>{timePeriods.find(p => p.id === selectedTimePeriod)?.name || 'Select period'}</span>
               <ChevronDown size={16} />
             </button>
 
             {isTimeDropdownOpen && (
-              <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg">
+              <div className="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg">
                 {timePeriods.map(period => (
                   <div
                     key={period.id}
                     onClick={() => handleTimePeriodSelect(period.id)}
-                    className="p-2 hover:bg-primary/5 cursor-pointer"
+                    className="p-2 hover:bg-gray-700 cursor-pointer text-white"
                   >
                     {period.name}
                   </div>
@@ -385,7 +385,7 @@ export default function Dashboard() {
                   type="text"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border rounded-md"
+                  className="w-full px-3 py-2 text-sm border border-gray-700 rounded-md bg-gray-800 text-white"
                   placeholder="dd/mm/yyyy"
                 />
                 <button
@@ -411,7 +411,7 @@ export default function Dashboard() {
                   type="text"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border rounded-md"
+                  className="w-full px-3 py-2 text-sm border border-gray-700 rounded-md bg-gray-800 text-white"
                   placeholder="dd/mm/yyyy"
                 />
                 <button
@@ -435,9 +435,9 @@ export default function Dashboard() {
         {/* Ratings Selection */}
         <div className="mb-6">
           <h2 className="text-sm font-semibold mb-2">Rating Categories</h2>
-          <div className="border rounded-md p-2 bg-white">
+          <div className="border border-gray-700 rounded-md p-2 bg-gray-800">
             {ratingCategories.map(category => (
-              <label key={category.id} className="flex items-center p-1 hover:bg-primary/5">
+              <label key={category.id} className="flex items-center p-1 hover:bg-gray-700">
                 <input
                   type="checkbox"
                   checked={selectedRatingCategories.includes(category.id)}
