@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  react-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    # Uncomment the following lines if you need environment variables
+    # environment:
+    #   - NODE_ENV=production
+    #   - API_URL=https://api.example.com
