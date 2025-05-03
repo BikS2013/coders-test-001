@@ -112,7 +112,7 @@ export default function Dashboard() {
       }
     } else {
       let newSelected = [...selectedUsers];
-      
+
       if (newSelected.includes(userId)) {
         newSelected = newSelected.filter(id => id !== userId);
         if (newSelected.includes('all')) {
@@ -124,7 +124,7 @@ export default function Dashboard() {
           newSelected.push('all');
         }
       }
-      
+
       setSelectedUsers(newSelected);
     }
   };
@@ -150,7 +150,7 @@ export default function Dashboard() {
       }
     } else {
       let newSelected = [...selectedRatingCategories];
-      
+
       if (newSelected.includes(categoryId)) {
         newSelected = newSelected.filter(id => id !== categoryId);
       } else {
@@ -159,7 +159,7 @@ export default function Dashboard() {
         }
         newSelected.push(categoryId);
       }
-      
+
       setSelectedRatingCategories(newSelected);
     }
   };
@@ -167,10 +167,10 @@ export default function Dashboard() {
   // Calendar component (simplified)
   const SimpleCalendar = ({ selectedDate, onDateSelect, onClose }: CalendarProps) => {
     const [viewDate, setViewDate] = useState<Date>(parseDate(selectedDate));
-    
+
     const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
     const firstDayOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay();
-    
+
     const days: (number | null)[] = [];
     for (let i = 0; i < firstDayOfMonth; i++) {
       days.push(null);
@@ -178,7 +178,7 @@ export default function Dashboard() {
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(i);
     }
-    
+
     const handleDateClick = (day: number | null): void => {
       if (day) {
         const newDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
@@ -186,13 +186,13 @@ export default function Dashboard() {
         onClose();
       }
     };
-    
+
     const changeMonth = (offset: number): void => {
       const newDate = new Date(viewDate);
       newDate.setMonth(newDate.getMonth() + offset);
       setViewDate(newDate);
     };
-    
+
     return (
       <div className="absolute z-10 bg-white shadow-lg rounded-md p-2 border border-gray-200 w-64">
         <div className="flex justify-between mb-2">
@@ -207,10 +207,10 @@ export default function Dashboard() {
             <div key={day} className="text-xs font-semibold">{day}</div>
           ))}
           {days.map((day, index) => (
-            <div 
-              key={index} 
+            <div
+              key={index}
               onClick={() => handleDateClick(day)}
-              className={`text-center text-sm p-1 cursor-pointer hover:bg-blue-100 ${day ? '' : 'invisible'}`}
+              className={`text-center text-sm p-1 cursor-pointer hover:bg-primary/10 ${day ? '' : 'invisible'}`}
             >
               {day}
             </div>
@@ -225,7 +225,7 @@ export default function Dashboard() {
     const startDate = parseDate(fromDate);
     const endDate = parseDate(toDate);
     const data: ChartDataEntry[] = [];
-    
+
     let currentDate = new Date(startDate);
     while (currentDate <= endDate) {
       // Generate random data for each rating category
@@ -237,34 +237,34 @@ export default function Dashboard() {
         mild_positive: Math.floor(Math.random() * 20),
         heavily_positive: Math.floor(Math.random() * 15)
       };
-      
+
       data.push(entry);
-      
+
       // Move to next date
       currentDate.setDate(currentDate.getDate() + 1);
     }
-    
+
     return data;
   };
-  
+
   const chartData = generateChartData();
 
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-12' : 'w-64'} bg-white shadow-md overflow-y-auto transition-all duration-300 relative`}>
+      <div className={`${sidebarCollapsed ? 'w-12' : 'w-64'} bg-white shadow-md inset-shadow-sm overflow-y-auto transition-all duration-300 relative`}>
         <div className="absolute right-0 top-2 p-1">
-          <button 
+          <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="bg-gray-200 rounded-l-md p-1 hover:bg-gray-300"
+            className="bg-gray-200 rounded-l-md p-1 hover:bg-primary/20 not-hover:opacity-75"
           >
             {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
         </div>
-        
+
         {!sidebarCollapsed && <div className="p-4">
         <h1 className="text-xl font-bold mb-6">Dashboard Settings</h1>
-        
+
         {/* Users Selection */}
         <div className="mb-6">
           <h2 className="text-sm font-semibold mb-2">Users</h2>
@@ -278,11 +278,11 @@ export default function Dashboard() {
                 <span>{selectedUsers.includes('all') ? 'All Users' : `${selectedUsers.length} selected`}</span>
                 <ChevronDown size={16} />
               </button>
-              
+
               {isDropdownOpen && !expandUsers && (
                 <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg">
                   <div className="p-2">
-                    <label className="flex items-center p-2 hover:bg-gray-100">
+                    <label className="flex items-center p-2 hover:bg-primary/5">
                       <input
                         type="checkbox"
                         checked={selectedUsers.includes('all')}
@@ -291,9 +291,9 @@ export default function Dashboard() {
                       />
                       <span>All</span>
                     </label>
-                    
+
                     {allUsers.map(user => (
-                      <label key={user.id} className="flex items-center p-2 hover:bg-gray-100">
+                      <label key={user.id} className="flex items-center p-2 hover:bg-primary/5">
                         <input
                           type="checkbox"
                           checked={selectedUsers.includes(user.id)}
@@ -307,7 +307,7 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-            
+
             <label className="flex items-center ml-2">
               <input
                 type="checkbox"
@@ -321,10 +321,10 @@ export default function Dashboard() {
               <span className="text-xs">Expand</span>
             </label>
           </div>
-          
+
           {expandUsers && (
             <div className="border rounded-md p-2 mt-2 bg-white">
-              <label className="flex items-center p-1 hover:bg-gray-100">
+              <label className="flex items-center p-1 hover:bg-primary/5">
                 <input
                   type="checkbox"
                   checked={selectedUsers.includes('all')}
@@ -333,9 +333,9 @@ export default function Dashboard() {
                 />
                 <span>All</span>
               </label>
-              
+
               {allUsers.map(user => (
-                <label key={user.id} className="flex items-center p-1 hover:bg-gray-100">
+                <label key={user.id} className="flex items-center p-1 hover:bg-primary/5">
                   <input
                     type="checkbox"
                     checked={selectedUsers.includes(user.id)}
@@ -348,7 +348,7 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-        
+
         {/* Time Period Selection */}
         <div className="mb-6">
           <h2 className="text-sm font-semibold mb-2">Time Period</h2>
@@ -360,14 +360,14 @@ export default function Dashboard() {
               <span>{timePeriods.find(p => p.id === selectedTimePeriod)?.name || 'Select period'}</span>
               <ChevronDown size={16} />
             </button>
-            
+
             {isTimeDropdownOpen && (
               <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg">
                 {timePeriods.map(period => (
                   <div
                     key={period.id}
                     onClick={() => handleTimePeriodSelect(period.id)}
-                    className="p-2 hover:bg-gray-100 cursor-pointer"
+                    className="p-2 hover:bg-primary/5 cursor-pointer"
                   >
                     {period.name}
                   </div>
@@ -375,7 +375,7 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-          
+
           {/* Date Range Pickers */}
           <div className="flex flex-col space-y-2">
             <div className="relative">
@@ -388,7 +388,7 @@ export default function Dashboard() {
                   className="w-full px-3 py-2 text-sm border rounded-md"
                   placeholder="dd/mm/yyyy"
                 />
-                <button 
+                <button
                   onClick={() => setShowFromCalendar(!showFromCalendar)}
                   className="absolute right-2 top-6"
                 >
@@ -403,7 +403,7 @@ export default function Dashboard() {
                 />
               )}
             </div>
-            
+
             <div className="relative">
               <label className="text-xs text-gray-600">To:</label>
               <div className="flex items-center">
@@ -414,7 +414,7 @@ export default function Dashboard() {
                   className="w-full px-3 py-2 text-sm border rounded-md"
                   placeholder="dd/mm/yyyy"
                 />
-                <button 
+                <button
                   onClick={() => setShowToCalendar(!showToCalendar)}
                   className="absolute right-2 top-6"
                 >
@@ -431,13 +431,13 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        
+
         {/* Ratings Selection */}
         <div className="mb-6">
           <h2 className="text-sm font-semibold mb-2">Rating Categories</h2>
           <div className="border rounded-md p-2 bg-white">
             {ratingCategories.map(category => (
-              <label key={category.id} className="flex items-center p-1 hover:bg-gray-100">
+              <label key={category.id} className="flex items-center p-1 hover:bg-primary/5">
                 <input
                   type="checkbox"
                   checked={selectedRatingCategories.includes(category.id)}
@@ -455,7 +455,7 @@ export default function Dashboard() {
       {/* Main Dashboard Area */}
       <div className="flex-1 overflow-y-auto">
         {/* Top panel - Selection Criteria Summary */}
-        <div className="bg-white p-4 shadow mb-4">
+        <div className="bg-white p-4 shadow inset-shadow-xs mb-4">
           <h1 className="text-xl font-bold mb-3">Chatbot Ratings Dashboard</h1>
           <div className="grid grid-cols-3 gap-4">
             <div className="border rounded p-2">
@@ -471,18 +471,18 @@ export default function Dashboard() {
             <div className="border rounded p-2">
               <h3 className="text-sm font-semibold mb-1">Rating Categories</h3>
               <p className="text-sm">
-                {selectedRatingCategories.includes('all') ? 'All Ratings' : 
-                  selectedRatingCategories.map(id => 
+                {selectedRatingCategories.includes('all') ? 'All Ratings' :
+                  selectedRatingCategories.map(id =>
                     ratingCategories.find(cat => cat.id === id)?.name
                   ).filter(Boolean).join(', ')}
               </p>
             </div>
           </div>
         </div>
-        
+
         {/* Bar Chart Panel */}
-        <div className="bg-white p-4 shadow mb-4">
-          <h2 className="text-lg font-semibold mb-3">Ratings Distribution Over Time</h2>
+        <div className="bg-white p-4 shadow inset-shadow-xs mb-4">
+          <h2 className="text-lg font-semibold mb-3 text-primary">Ratings Distribution Over Time</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -503,10 +503,10 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
         </div>
-        
+
         {/* Additional dashboard panels could go here */}
-        <div className="bg-white p-4 shadow mb-4">
-          <h2 className="text-lg font-semibold mb-3">Rating Summary</h2>
+        <div className="bg-white p-4 shadow inset-shadow-xs mb-4">
+          <h2 className="text-lg font-semibold mb-3 text-secondary">Rating Summary</h2>
           <div className="grid grid-cols-5 gap-4 text-center">
             <div className="bg-red-100 p-3 rounded">
               <div className="text-xl font-bold text-red-600">

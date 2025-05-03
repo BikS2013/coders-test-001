@@ -4,12 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard App</title>
-    <!-- Tailwind CSS via CDN -->
+    <!-- Tailwind CSS v4 via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
-          extend: {}
+          extend: {
+            colors: {
+              // Using OKLCH colors for better vibrancy
+              primary: 'oklch(0.6 0.2 240)',
+              secondary: 'oklch(0.8 0.2 160)'
+            }
+          }
         }
       }
     </script>
