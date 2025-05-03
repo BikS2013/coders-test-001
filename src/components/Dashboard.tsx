@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ChevronDown, Calendar, ChevronLeft, ChevronRight, Moon, Sun } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ChevronDown, Calendar, ChevronLeft, ChevronRight, Moon, Sun, Users, Clock, Settings, BarChart2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Define types
@@ -289,6 +289,23 @@ export default function Dashboard() {
     setIsDarkMode(!isDarkMode);
   };
 
+  // References for scrolling to sections
+  const usersRef = useRef<HTMLDivElement>(null);
+  const timeRef = useRef<HTMLDivElement>(null);
+  const ratingsRef = useRef<HTMLDivElement>(null);
+
+  // Handle icon click in collapsed sidebar
+  const handleIconClick = (ref: React.RefObject<HTMLDivElement>) => {
+    if (sidebarCollapsed) {
+      setSidebarCollapsed(false);
+
+      // Wait for sidebar to expand before scrolling
+      setTimeout(() => {
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300); // Match the transition duration
+    }
+  };
+
   // Generate sample chart data
   const generateChartData = (): ChartDataEntry[] => {
     const startDate = parseDate(fromDate);
@@ -344,6 +361,52 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Collapsed sidebar icons */}
+        {sidebarCollapsed && (
+          <div className="flex flex-col items-center pt-12 space-y-6">
+            <div className="flex flex-col items-center">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full hover:bg-gray-700 transition-colors"
+                aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+                title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+            </div>
+            <div className="flex flex-col items-center">
+              <button
+                onClick={() => handleIconClick(usersRef)}
+                className="p-2 rounded-full hover:bg-gray-700 transition-colors"
+                aria-label="Users"
+                title="Users"
+              >
+                <Users size={20} />
+              </button>
+            </div>
+            <div className="flex flex-col items-center">
+              <button
+                onClick={() => handleIconClick(timeRef)}
+                className="p-2 rounded-full hover:bg-gray-700 transition-colors"
+                aria-label="Time Period"
+                title="Time Period"
+              >
+                <Clock size={20} />
+              </button>
+            </div>
+            <div className="flex flex-col items-center">
+              <button
+                onClick={() => handleIconClick(ratingsRef)}
+                className="p-2 rounded-full hover:bg-gray-700 transition-colors"
+                aria-label="Rating Categories"
+                title="Rating Categories"
+              >
+                <BarChart2 size={20} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {!sidebarCollapsed && <div className="p-4">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-xl font-bold">Dashboard Settings</h1>
@@ -357,7 +420,7 @@ export default function Dashboard() {
         </div>
 
         {/* Users Selection */}
-        <div className="mb-6">
+        <div className="mb-6" ref={usersRef}>
           <h2 className="text-sm font-semibold mb-2">Users</h2>
           <div className="flex items-center mb-2">
             <div className={`relative w-full ${expandUsers ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -441,7 +504,7 @@ export default function Dashboard() {
         </div>
 
         {/* Time Period Selection */}
-        <div className="mb-6">
+        <div className="mb-6" ref={timeRef}>
           <h2 className="text-sm font-semibold mb-2">Time Period</h2>
           <div className="relative w-full mb-3">
             <button
@@ -524,7 +587,7 @@ export default function Dashboard() {
         </div>
 
         {/* Ratings Selection */}
-        <div className="mb-6">
+        <div className="mb-6" ref={ratingsRef}>
           <h2 className="text-sm font-semibold mb-2">Rating Categories</h2>
           <div className="border border-gray-700 rounded-md p-2 bg-gray-800">
             {ratingCategories.map(category => (
