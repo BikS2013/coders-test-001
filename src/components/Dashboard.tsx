@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -80,6 +80,12 @@ export default function Dashboard() {
   const [showFromCalendar, setShowFromCalendar] = useState<boolean>(false);
   const [showToCalendar, setShowToCalendar] = useState<boolean>(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
+    // Try to get saved width from localStorage, default to 256px
+    const savedWidth = localStorage.getItem('sidebarWidth');
+    return savedWidth ? parseInt(savedWidth, 10) : 256;
+  });
+  const [isResizing, setIsResizing] = useState<boolean>(false);
 
   // Helper function to subtract days from a date
   function subtractDays(date: Date, days: number): Date {
@@ -220,6 +226,48 @@ export default function Dashboard() {
     );
   };
 
+  // Resize handlers
+  const handleResizeStart = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  // Handle window resize and cleanup
+  useEffect(() => {
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (isResizing) {
+        const newWidth = moveEvent.clientX;
+        // Set min and max constraints
+        if (newWidth >= 180 && newWidth <= 500) {
+          setSidebarWidth(newWidth);
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    // Add event listeners when resizing is active
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    // Cleanup function to remove event listeners
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]); // Only re-run when isResizing changes
+
+  // Save sidebar width to localStorage when it changes
+  useEffect(() => {
+    if (!sidebarCollapsed) {
+      localStorage.setItem('sidebarWidth', sidebarWidth.toString());
+    }
+  }, [sidebarWidth, sidebarCollapsed]);
+
   // Generate sample chart data
   const generateChartData = (): ChartDataEntry[] => {
     const startDate = parseDate(fromDate);
@@ -250,9 +298,12 @@ export default function Dashboard() {
   const chartData = generateChartData();
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className={`flex h-screen bg-gray-100 ${isResizing ? 'cursor-ew-resize select-none' : ''}`}>
       {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-12' : 'w-64'} bg-gray-900 text-white shadow-md inset-shadow-sm overflow-y-auto transition-all duration-300 relative`}>
+      <div
+        className={`${sidebarCollapsed ? 'w-12' : ''} ${isResizing ? '' : 'transition-all duration-300'} bg-gray-900 text-white shadow-md inset-shadow-sm overflow-y-auto relative`}
+        style={{ width: sidebarCollapsed ? '3rem' : `${sidebarWidth}px` }}
+      >
         <div className="absolute right-0 top-2 p-1">
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -261,6 +312,16 @@ export default function Dashboard() {
             {sidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
         </div>
+
+        {/* Resize handle */}
+        {!sidebarCollapsed && (
+          <div
+            className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize hover:bg-primary/40 z-10 flex items-center justify-center group"
+            onMouseDown={handleResizeStart}
+          >
+            <div className="h-full w-px bg-gray-600 group-hover:bg-primary group-hover:w-0.5 transition-all"></div>
+          </div>
+        )}
 
         {!sidebarCollapsed && <div className="p-4">
         <h1 className="text-xl font-bold mb-6">Dashboard Settings</h1>
